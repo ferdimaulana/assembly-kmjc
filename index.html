@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMO-AFG Cloud v2.0 | Gedung C - PT Kanindo Makmur Jaya 2</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono untuk angka -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        .industrial-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .card-hover {
+            transition: all 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.65; }
+        }
+        .live-dot {
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Cloud Top Banner (Status & Multi-Device Sync Bar) -->
+    <div class="bg-slate-950 text-slate-300 border-b border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-2">
+            <!-- Cloud Status Indicator -->
+            <div class="flex items-center gap-2.5">
+                <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 bg-amber-950/90 text-amber-300 border border-amber-700/60 px-2.5 py-0.5 rounded-full font-semibold">
+                    <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot"></span>
+                    <span id="cloudStatusText">Menghubungkan ke Cloud...</span>
+                </span>
+                <span class="hidden md:inline text-slate-500">|</span>
+                <span class="hidden md:inline text-slate-400" id="lastSyncTimeText">Sinkronisasi otomatis antar HP & PC</span>
+            </div>
+
+            <!-- Room / Line Sync Switcher & Multi-Phone Guide -->
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i>
+                    <span class="text-slate-400">Kode Sinkron Lini:</span>
+                    <strong class="font-mono text-amber-300 tracking-wide" id="activeRoomDisplay">GEDUNG-C-LINE1</strong>
+                    <button onclick="openSyncModal()" class="ml-1 text-[11px] bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded font-semibold transition cursor-pointer">
+                        Ganti / Buka di HP Lain
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="industrial-gradient text-white shadow-lg sticky top-0 z-30 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <!-- Brand & Location -->
+                <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 p-2.5 rounded-xl flex items-center justify-center shrink-0 shadow-inner">
+                        <i class="fa-solid fa-suitcase-rolling text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="bg-amber-500 text-slate-950 text-xs font-extrabold px-2.5 py-0.5 rounded-md tracking-wide uppercase">
+                                GEDUNG C
+                            </span>
+                            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
+                                PT Kanindo Makmur Jaya 2
+                            </h1>
+                            <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                                Cloud Real-Time v2.0
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span><i class="fa-solid fa-user-check text-emerald-400 mr-1"></i>Supervisor Assembly Koper</span>
+                            <span class="hidden sm:inline text-slate-500">|</span>
+                            <span class="font-mono text-amber-300 font-medium" id="headerPoBadge">PO: PO-KMJ2-GC-001</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg text-xs text-slate-300 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-check text-emerald-400"></i>
+                        <span id="currentDateDisplay">Sabtu, 17 Okt 2026</span>
+                    </div>
+                    <button onclick="openSettingsModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Edit Target PO & Saldo</span>
+                    </button>
+                    <button onclick="openBackupModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 cursor-pointer" title="Backup / Restore Kode Data">
+                        <i class="fa-solid fa-database text-blue-400"></i>
+                        <span class="hidden sm:inline">Backup</span>
+                    </button>
+                    <button onclick="openResetModal()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 border border-rose-800/70 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 cursor-pointer" title="Kembalikan ke data awal (Output 399 / Target 470)">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span class="hidden sm:inline">Reset 399/470</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Sub-Header Info Bar -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-11 bg-emerald-500 rounded-full shrink-0"></div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Model / Style Produksi Aktif</p>
+                        <span class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono font-semibold" id="subHeaderRoomTag">Lini: GEDUNG-C-LINE1</span>
+                    </div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 mt-0.5" id="styleNameDisplay">PO-KMJ2-GC-001 — Koper Hardcase 24" Regular</h2>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <button onclick="openSyncModal()" class="flex-1 sm:flex-initial justify-center bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Cara Buka di HP Lain</span>
+                </button>
+                <button onclick="openWhatsAppModal()" class="flex-1 sm:flex-initial justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                    <i class="fa-brands fa-whatsapp text-base"></i>
+                    <span>Salin Laporan WA</span>
+                </button>
+                <button onclick="exportToCSV()" class="flex-1 sm:flex-initial justify-center bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-file-csv text-amber-400"></i>
+                    <span>Export Excel/CSV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 Summary Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1: Target PO -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Target Total 1 PO</span>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl sm:text-4xl font-extrabold font-mono text-slate-900" id="cardTargetPO">470</span>
+                            <span class="text-xs font-semibold text-slate-500">pcs</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 text-blue-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-bullseye text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span>Kuota Penuh Order</span>
+                    <button onclick="openSettingsModal()" class="font-semibold text-blue-600 hover:underline bg-blue-50 px-2 py-0.5 rounded cursor-pointer">Ubah Target</button>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Output Assembly -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Total Output Assembly</span>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-600" id="cardTotalOutput">399</span>
+                            <span class="text-xs font-semibold text-slate-500">pcs</span>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-screwdriver-wrench text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Pencapaian Lini:</span>
+                    <span class="font-bold font-mono text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded" id="cardOutputPercent">84.89%</span>
+                </div>
+            </div>
+
+            <!-- Card 3: Kekurangan (Shortage) -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-amber-300/80 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700" id="shortageTitleLabel">Sisa Kekurangan (Shortage)</span>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl sm:text-4xl font-extrabold font-mono text-amber-600" id="cardShortage">71</span>
+                            <span class="text-xs font-semibold text-slate-500">pcs</span>
+                        </div>
+                    </div>
+                    <div class="bg-amber-100 text-amber-600 p-3 rounded-xl" id="shortageIconBox">
+                        <i class="fa-solid fa-hourglass-half text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Rumus: Target - Output</span>
+                    <span class="font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded" id="shortageStatusBadge">Kurang 15.11%</span>
+                </div>
+            </div>
+
+            <!-- Card 4: Transfer Finish Good & WIP -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Terkirim ke Finish Good</span>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl sm:text-4xl font-extrabold font-mono text-indigo-600" id="cardTotalFG">385</span>
+                            <span class="text-xs font-semibold text-slate-500">pcs</span>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 text-indigo-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-boxes-packing text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-600 font-medium">Stok WIP di Assembly:</span>
+                    <span class="font-bold font-mono text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded" id="cardWipStock">14 pcs</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dual Progress Bar Visual -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-emerald-600"></i>
+                    Visualisasi Progress Penyelesaian PO & Transfer Gudang FG
+                </h3>
+                <span class="text-xs text-slate-500" id="progressSummaryNote">399 dari 470 pcs selesai dirakit (Kurang 71 pcs)</span>
+            </div>
+
+            <!-- Bar 1: Assembly Output vs PO Target -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-semibold">
+                    <span class="text-slate-700">1. Progress Output Assembly terhadap Target PO</span>
+                    <span class="font-mono text-emerald-700" id="barAssemblyLabel">399 / 470 pcs (84.89%)</span>
+                </div>
+                <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
+                    <div id="barAssemblyFill" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style="width: 84.89%"></div>
+                </div>
+            </div>
+
+            <!-- Bar 2: Finish Good Transfer vs Assembly Output -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-semibold">
+                    <span class="text-slate-700">2. Progress Serah Terima ke Finish Good (dari Total Output Assembly)</span>
+                    <span class="font-mono text-indigo-700" id="barFGLabel">385 / 399 pcs terkirim (14 pcs masih di lantai Assembly)</span>
+                </div>
+                <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
+                    <div id="barFGFill" class="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-500" style="width: 96.49%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Grid: Completion Estimator + Input Form -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Completion Estimator Engine (7 cols on lg) -->
+            <section class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between overflow-hidden">
+                <div>
+                    <div class="bg-slate-900 text-white px-5 py-4 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-calculator text-amber-400 text-lg"></i>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold">Mesin Prediksi Penyelesaian PO (Completion Estimator)</h3>
+                                <p class="text-xs text-slate-300">Kalkulasi otomatis kapan sisa kekurangan <span class="font-mono font-bold text-amber-300" id="estimatorShortageText">71 pcs</span> akan tuntas</p>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer select-none">
+                            <input type="checkbox" id="skipSundayToggle" onchange="toggleSkipSunday(this.checked)" checked class="rounded text-emerald-500 focus:ring-0 cursor-pointer">
+                            <span class="text-slate-200 font-medium">Abaikan Hari Minggu</span>
+                        </label>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <!-- Parameter Speed Adjuster Bar -->
+                        <div class="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="text-xs text-slate-600">
+                                <span class="font-bold text-slate-800 block">Parameter Kecepatan Rata-Rata Lini Gedung C:</span>
+                                Rentang target disetel pada <span class="font-mono font-bold text-slate-900" id="speedRangeBadge">15 – 18 pcs/hari</span>. Ubah angka untuk simpan otomatis ke Cloud:
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg px-2 py-1">
+                                    <span class="text-[11px] text-slate-400 mr-1.5">Min:</span>
+                                    <input type="number" id="quickMinRate" min="1" max="500" value="15" onchange="updateSpeedRates()" class="w-12 text-xs font-mono font-bold text-slate-800 focus:outline-none text-center">
+                                </div>
+                                <span class="text-slate-400 font-bold">-</span>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg px-2 py-1">
+                                    <span class="text-[11px] text-slate-400 mr-1.5">Max:</span>
+                                    <input type="number" id="quickMaxRate" min="1" max="500" value="18" onchange="updateSpeedRates()" class="w-12 text-xs font-mono font-bold text-slate-800 focus:outline-none text-center">
+                                </div>
+                                <span class="text-xs text-slate-500">pcs/hr</span>
+                            </div>
+                        </div>
+
+                        <!-- 3 Prediction Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                            <!-- Optimistic Card (Max Rate: 18 pcs/day) -->
+                            <div class="border-2 border-emerald-200 bg-emerald-50/40 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Target Optimis</span>
+                                        <span class="text-xs font-mono font-bold text-emerald-700" id="optRateLabel">18 pcs/hr</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="text-2xl font-extrabold font-mono text-slate-900" id="optWorkDays">4 Hari Kerja</div>
+                                        <p class="text-xs text-slate-500 font-mono mt-0.5" id="optExactMath">71 / 18 = 3.94 hari</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-emerald-200/70">
+                                    <span class="text-[11px] text-slate-500 block">Perkiraan Tanggal Selesai:</span>
+                                    <span class="text-sm font-bold text-emerald-800 block mt-0.5" id="optFinishDate">Rabu, 21 Okt 2026</span>
+                                </div>
+                            </div>
+
+                            <!-- Conservative Card (Min Rate: 15 pcs/day) -->
+                            <div class="border-2 border-amber-200 bg-amber-50/40 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">Konservatif</span>
+                                        <span class="text-xs font-mono font-bold text-amber-800" id="conRateLabel">15 pcs/hr</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="text-2xl font-extrabold font-mono text-slate-900" id="conWorkDays">5 Hari Kerja</div>
+                                        <p class="text-xs text-slate-500 font-mono mt-0.5" id="conExactMath">71 / 15 = 4.73 hari</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-amber-200/70">
+                                    <span class="text-[11px] text-slate-500 block">Perkiraan Tanggal Selesai:</span>
+                                    <span class="text-sm font-bold text-amber-900 block mt-0.5" id="conFinishDate">Kamis, 22 Okt 2026</span>
+                                </div>
+                            </div>
+
+                            <!-- Actual Average Card -->
+                            <div class="border border-slate-200 bg-slate-50/70 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-2 py-0.5 rounded">Rata-Rata Aktual</span>
+                                        <span class="text-xs font-mono font-bold text-blue-700" id="actRateLabel">16.3 pcs/hr</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="text-2xl font-extrabold font-mono text-slate-900" id="actWorkDays">5 Hari Kerja</div>
+                                        <p class="text-xs text-slate-500 font-mono mt-0.5" id="actExactMath">Berdasarkan riwayat log</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-slate-200">
+                                    <span class="text-[11px] text-slate-500 block">Perkiraan Tanggal Selesai:</span>
+                                    <span class="text-sm font-bold text-blue-900 block mt-0.5" id="actFinishDate">Kamis, 22 Okt 2026</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Simulation Breakdown -->
+                        <div class="bg-slate-900 text-slate-200 rounded-xl p-4 text-xs space-y-2">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="font-bold text-amber-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                    Simulasi Jadwal Pemenuhan Sisa Kekurangan (<span id="scheduleShortageCount">71</span> pcs):
+                                </span>
+                                <span class="text-[11px] text-slate-400" id="sundayRuleNote">Minggu Libur (Non-Hari Kerja)</span>
+                            </div>
+                            <div id="dailyProjectionList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                <!-- Diisi otomatis oleh JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Info Box -->
+                <div class="bg-slate-50 px-5 py-3 border-t border-slate-200/80 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
+                    <span><i class="fa-solid fa-cloud-arrow-up text-emerald-600 mr-1"></i>Setiap perubahan langsung tersimpan di Cloud dan memperbarui tampilan di semua HP secara otomatis.</span>
+                </div>
+            </section>
+
+            <!-- Right Column: Form Input Harian (5 cols on lg) -->
+            <section class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col justify-between">
+                <div>
+                    <div class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-clipboard-check text-xl text-emerald-200"></i>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold">Input Output Harian & Kirim FG</h3>
+                                <p class="text-xs text-emerald-100">Tersimpan ke Cloud & langsung tampil di HP lain</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="dailyLogForm" onsubmit="handleAddDailyLog(event)" class="p-5 space-y-4">
+                        <!-- Tanggal & Shift -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Produksi</label>
+                                <input type="date" id="inputDate" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan Shift / Lini</label>
+                                <select id="inputShift" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                    <option value="Shift Reguler - Gedung C">Shift Reguler - Gedung C</option>
+                                    <option value="Shift Lembur (Overtime)">Shift Lembur (Overtime)</option>
+                                    <option value="Susulan / Rework QC">Susulan / Rework QC</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Input Output Assembly + Quick Preset Buttons -->
+                        <div class="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label for="inputAssemblyQty" class="text-xs font-bold text-emerald-950">
+                                    Hasil Output Assembly Hari Ini (pcs) <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="text-[11px] text-emerald-700 font-medium">Tombol Cepat:</span>
+                            </div>
+
+                            <!-- Quick Fill Buttons -->
+                            <div class="grid grid-cols-4 gap-1.5">
+                                <button type="button" onclick="setQuickOutput(15)" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-800 border border-emerald-300 rounded-lg py-1.5 text-xs font-mono font-bold transition shadow-sm cursor-pointer">+15 pcs</button>
+                                <button type="button" onclick="setQuickOutput(16)" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-800 border border-emerald-300 rounded-lg py-1.5 text-xs font-mono font-bold transition shadow-sm cursor-pointer">+16 pcs</button>
+                                <button type="button" onclick="setQuickOutput(17)" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-800 border border-emerald-300 rounded-lg py-1.5 text-xs font-mono font-bold transition shadow-sm cursor-pointer">+17 pcs</button>
+                                <button type="button" onclick="setQuickOutput(18)" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-800 border border-emerald-300 rounded-lg py-1.5 text-xs font-mono font-bold transition shadow-sm cursor-pointer">+18 pcs</button>
+                            </div>
+
+                            <div class="relative">
+                                <input type="number" id="inputAssemblyQty" min="0" max="1000" placeholder="Masukkan jumlah output assembly (contoh: 17)" required oninput="syncFGDefault(this.value)" class="w-full rounded-xl border border-emerald-300 bg-white px-3.5 py-2.5 text-base font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-400">pcs</span>
+                            </div>
+                        </div>
+
+                        <!-- Input Transfer ke Finish Good (FG) -->
+                        <div class="bg-indigo-50/60 border border-indigo-200 rounded-xl p-3.5 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label for="inputFGQty" class="text-xs font-bold text-indigo-950">
+                                    Dikirim dari Assembly ke Finish Good (pcs) <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button" onclick="copyAssemblyToFG()" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold underline cursor-pointer">
+                                    Samakan dgn Output
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputFGQty" min="0" max="1000" placeholder="Jumlah koper diserahkan ke FG" required class="w-full rounded-xl border border-indigo-300 bg-white px-3.5 py-2.5 text-base font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <span class="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-400">pcs</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">
+                                *Jika dikirim ke FG lebih kecil dari Output, selisihnya otomatis dihitung sebagai <b>WIP (tertahan di Assembly)</b>.
+                            </p>
+                        </div>
+
+                        <!-- Catatan / Kendala / No Bukti FG -->
+                        <div>
+                            <label for="inputNotes" class="block text-xs font-bold text-slate-700 mb-1">
+                                No. Bukti Serah Terima FG / Catatan Kendala (Opsional)
+                            </label>
+                            <input type="text" id="inputNotes" placeholder="Contoh: BTFG-089 / Lancar / Tunggu roda 2 set" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+
+                        <button type="submit" id="btnSubmitDaily" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm cursor-pointer">
+                            <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+                            <span>Simpan ke Cloud & Hitung Ulang</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Preview Calculation Footer -->
+                <div class="bg-slate-50 px-5 py-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>Total Output Saat Ini: <strong class="font-mono text-emerald-700" id="formFooterOutput">399 pcs</strong></span>
+                    <span>Sisa PO: <strong class="font-mono text-amber-700" id="formFooterShortage">71 pcs</strong></span>
+                </div>
+            </section>
+        </div>
+
+        <!-- Tabel Riwayat Harian & Log Produksi (Bisa Edit & Hapus langsung ke Cloud) -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i>
+                        Riwayat Log Output Assembly & Serah Terima Finish Good
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Setiap baris (termasuk saldo awal maupun input harian) dapat di-<strong>Edit</strong> atau di-<strong>Hapus</strong> dan otomatis tersimpan ke Cloud.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs bg-slate-100 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200" id="logCountBadge">
+                        Total 4 Catatan Log
+                    </span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            <th class="py-3.5 px-4">Tanggal</th>
+                            <th class="py-3.5 px-4">Shift / Tipe Catatan</th>
+                            <th class="py-3.5 px-4 text-right">Output Assembly</th>
+                            <th class="py-3.5 px-4 text-right">Dikirim ke FG</th>
+                            <th class="py-3.5 px-4 text-right">Selisih WIP</th>
+                            <th class="py-3.5 px-4">Catatan / Bukti FG</th>
+                            <th class="py-3.5 px-4 text-center">Edit / Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody" class="divide-y divide-slate-200/70 text-xs sm:text-sm">
+                        <!-- Diisi otomatis oleh JavaScript -->
+                    </tbody>
+                    <tfoot class="bg-slate-900 text-white font-mono text-xs sm:text-sm font-bold">
+                        <tr>
+                            <td colspan="2" class="py-3.5 px-4 font-sans">TOTAL AKUMULASI SAAT INI</td>
+                            <td class="py-3.5 px-4 text-right text-emerald-400" id="tableFootOutput">399 pcs</td>
+                            <td class="py-3.5 px-4 text-right text-indigo-300" id="tableFootFG">385 pcs</td>
+                            <td class="py-3.5 px-4 text-right text-amber-300" id="tableFootWIP">14 pcs</td>
+                            <td colspan="2" class="py-3.5 px-4 text-right font-sans text-xs text-slate-300" id="tableFootShortageInfo">Kekurangan PO: 71 pcs</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-8 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <div>
+                <strong>SMO-AFG Cloud v2.0</strong> — Sistem Monitoring Output Assembly & Finish Good | <strong>Gedung C - PT Kanindo Makmur Jaya 2</strong>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>ID Sesi Perangkat: <code class="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded" id="footerUserIdDisplay">Memuat...</code></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Pengaturan Target PO & Saldo Awal -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-amber-400"></i>
+                    Edit Parameter PO & Kecepatan Lini
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveSettingsModal(event)" class="p-5 space-y-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Nomor PO & Model Koper</label>
+                    <input type="text" id="modalPoName" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Target Total 1 PO (pcs)</label>
+                    <input type="number" id="modalTargetPO" min="1" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <p class="text-[11px] text-slate-500 mt-1">Default PO saat ini: 470 pcs.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Min Output / Hari (pcs)</label>
+                        <input type="number" id="modalMinRate" min="1" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Max Output / Hari (pcs)</label>
+                        <input type="number" id="modalMaxRate" min="1" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1 text-emerald-600"></i>
+                    Perubahan di sini akan langsung disimpan ke Cloud dan memperbarui seluruh HP yang terhubung ke lini <strong id="modalSettingsRoomLabel">GEDUNG-C-LINE1</strong>.
+                </div>
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 cursor-pointer">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">Simpan ke Cloud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Edit Baris Riwayat Log Harian / Saldo Awal -->
+    <div id="editLogModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-blue-700 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Edit Catatan Output / Transfer FG
+                </h3>
+                <button onclick="closeEditLogModal()" class="text-blue-200 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditLogModal(event)" class="p-5 space-y-4 text-xs sm:text-sm">
+                <input type="hidden" id="editLogId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Tanggal</label>
+                        <input type="date" id="editLogDate" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Shift / Tipe Catatan</label>
+                        <input type="text" id="editLogShift" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-emerald-800 mb-1">Output Assembly (pcs)</label>
+                        <input type="number" id="editLogAssemblyQty" min="0" required class="w-full rounded-xl border border-emerald-300 bg-emerald-50/40 px-3.5 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-indigo-800 mb-1">Dikirim ke FG (pcs)</label>
+                        <input type="number" id="editLogFGQty" min="0" required class="w-full rounded-xl border border-indigo-300 bg-indigo-50/40 px-3.5 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Catatan / No. Bukti Serah Terima FG</label>
+                    <input type="text" id="editLogNotes" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeEditLogModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 cursor-pointer">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Sinkronisasi Cloud & Panduan Buka di HP Lain -->
+    <div id="syncModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-blue-700 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                    Sinkronisasi Cloud & Buka Data di HP Lain
+                </h3>
+                <button onclick="closeSyncModal()" class="text-blue-200 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs sm:text-sm">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-slate-700 space-y-1.5">
+                    <div class="font-bold text-blue-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-blue-600"></i>
+                        Bagaimana Cara Membuka Data Terbaru di HP Lain?
+                    </div>
+                    <ol class="list-decimal list-inside space-y-1 text-xs text-slate-700">
+                        <li>Buka aplikasi web ini di HP lain, tablet, atau komputer kantor.</li>
+                        <li>Pastikan <strong>Kode Sinkronisasi Lini</strong> di bawah ini sama (Default: <code class="font-mono font-bold text-blue-800">GEDUNG-C-LINE1</code>).</li>
+                        <li>Seluruh angka Output (399 pcs), Kekurangan (71 pcs), maupun input harian yang Anda edit akan <strong>otomatis muncul sama persis secara real-time</strong> tanpa perlu kirim file manual.</li>
+                    </ol>
+                </div>
+
+                <form onsubmit="handleSwitchRoom(event)" class="space-y-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Kode Sinkronisasi Lini / Ruangan Cloud Aktif</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inputRoomCode" required placeholder="Contoh: GEDUNG-C-LINE1" class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 font-mono font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl cursor-pointer shrink-0">
+                                Hubungkan Lini
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Pilihan cepat lini di Gedung C:
+                        </p>
+                        <div class="flex flex-wrap gap-1.5 mt-1.5">
+                            <button type="button" onclick="quickSelectRoom('GEDUNG-C-LINE1')" class="text-xs font-mono bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300 px-2.5 py-1 rounded-lg cursor-pointer">GEDUNG-C-LINE1</button>
+                            <button type="button" onclick="quickSelectRoom('GEDUNG-C-LINE2')" class="text-xs font-mono bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300 px-2.5 py-1 rounded-lg cursor-pointer">GEDUNG-C-LINE2</button>
+                            <button type="button" onclick="quickSelectRoom('GEDUNG-C-LINE3')" class="text-xs font-mono bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300 px-2.5 py-1 rounded-lg cursor-pointer">GEDUNG-C-LINE3</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="flex items-center justify-end pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeSyncModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 cursor-pointer">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Laporan WhatsApp Siap Kirim -->
+    <div id="waModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-xl"></i>
+                    Format Laporan Harian WhatsApp (Gedung C)
+                </h3>
+                <button onclick="closeWhatsAppModal()" class="text-emerald-200 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <p class="text-xs text-slate-600">
+                    Teks laporan di bawah ini dibuat otomatis dari data terkini. Klik tombol <strong>Salin Teks Laporan</strong> lalu tempel (*paste*) di grup WhatsApp manajemen / PPIC:
+                </p>
+                <textarea id="waReportText" rows="12" readonly class="w-full rounded-xl bg-slate-50 border border-slate-300 p-3.5 font-mono text-xs text-slate-800 focus:outline-none"></textarea>
+                <div class="flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeWhatsAppModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-100 cursor-pointer">Tutup</button>
+                    <button type="button" onclick="copyWhatsAppText()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm cursor-pointer">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Salin Teks Laporan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Export / Import Kode Backup JSON (Cadangan Offline Antar HP) -->
+    <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-database text-blue-400"></i>
+                    Export / Import Kode Backup Data
+                </h3>
+                <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs sm:text-sm">
+                <p class="text-xs text-slate-600">
+                    Selain sinkronisasi Cloud otomatis, Anda juga bisa menyalin <strong>Kode Backup JSON</strong> di bawah ini untuk dikirim lewat WhatsApp dan ditempel (*Import*) di HP lain kapan saja:
+                </p>
+                <textarea id="backupJsonTextarea" rows="7" class="w-full rounded-xl bg-slate-50 border border-slate-300 p-3 font-mono text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onclick="copyBackupJson()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Salin Kode Backup</span>
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeBackupModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer">Tutup</button>
+                        <button type="button" onclick="importBackupJson()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-file-import"></i>
+                            <span>Muat & Simpan ke Cloud</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: Konfirmasi Reset ke Baseline (399 / 470) -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-rose-700 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Reset Data Cloud ke Baseline Awal?
+                </h3>
+                <button onclick="closeResetModal()" class="text-rose-200 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs sm:text-sm text-slate-600">
+                <p>
+                    Tindakan ini akan mengembalikan data di Cloud untuk lini <strong id="resetModalRoomLabel">GEDUNG-C-LINE1</strong> ke posisi awal sesuai laporan Anda:
+                </p>
+                <ul class="list-disc list-inside bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 font-medium text-slate-800">
+                    <li>Nomor PO: <strong>PO-KMJ2-GC-001</strong></li>
+                    <li>Target 1 PO: <strong>470 pcs</strong></li>
+                    <li>Total Output Assembly: <strong>399 pcs</strong></li>
+                    <li>Sisa Kekurangan (Shortage): <strong>71 pcs</strong></li>
+                    <li>Rata-rata Output: <strong>15 – 18 pcs/hari</strong></li>
+                </ul>
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeResetModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 cursor-pointer">Batal</button>
+                    <button type="button" onclick="confirmResetData()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer">Ya, Reset ke 399 / 470</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Cloud Real-Time Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Konfigurasi Global Environment Firebase
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'smo-afg-kanindo-gc';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let unsubscribeLineSnapshot = null;
+
+        // Kode Sinkronisasi Lini Default
+        let currentRoomCode = 'GEDUNG-C-LINE1';
+
+        // Data Baseline Default sesuai kondisi nyata Supervisor (Output 399, Kurang 71, PO 470)
+        function getDefaultState() {
+            return {
+                poNumber: 'PO-KMJ2-GC-001',
+                styleName: 'PO-KMJ2-GC-001 — Koper Hardcase 24" Regular',
+                targetPO: 470,
+                minDailyRate: 15,
+                maxDailyRate: 18,
+                skipSunday: true,
+                updatedAt: new Date().toISOString(),
+                logs: [
+                    {
+                        id: 'log-baseline',
+                        date: '2026-10-14',
+                        shift: 'Saldo Akumulasi Awal',
+                        assemblyQty: 350,
+                        fgQty: 340,
+                        notes: 'Akumulasi output assembly & transfer FG sebelumnya',
+                        isBaseline: true
+                    },
+                    {
+                        id: 'log-day1',
+                        date: '2026-10-15',
+                        shift: 'Shift Reguler - Gedung C',
+                        assemblyQty: 16,
+                        fgQty: 15,
+                        notes: 'BTFG-081 / Lancar, 1 pcs tunggu cek QC',
+                        isBaseline: false
+                    },
+                    {
+                        id: 'log-day2',
+                        date: '2026-10-16',
+                        shift: 'Shift Reguler - Gedung C',
+                        assemblyQty: 18,
+                        fgQty: 16,
+                        notes: 'BTFG-084 / Target maksimal tercapai',
+                        isBaseline: false
+                    },
+                    {
+                        id: 'log-day3',
+                        date: '2026-10-17',
+                        shift: 'Shift Reguler - Gedung C',
+                        assemblyQty: 15,
+                        fgQty: 14,
+                        notes: 'BTFG-088 / Tunggu suplai komponen roda 30 menit',
+                        isBaseline: false
+                    }
+                ]
+            };
+        }
+
+        let appState = getDefaultState();
+
+        // Update UI Indikator Koneksi Cloud
+        function setCloudStatusUI(status, customMessage = '') {
+            const badge = document.getElementById('cloudStatusBadge');
+            const dot = document.getElementById('cloudStatusDot');
+            const text = document.getElementById('cloudStatusText');
+            const timeText = document.getElementById('lastSyncTimeText');
+
+            if (status === 'connected') {
+                badge.className = 'inline-flex items-center gap-1.5 bg-emerald-950/90 text-emerald-300 border border-emerald-600/60 px-2.5 py-0.5 rounded-full font-semibold';
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 live-dot';
+                text.textContent = customMessage || 'Cloud Terhubung & Tersinkronisasi Real-Time';
+                const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                timeText.textContent = `Update Cloud terakhir: ${nowStr} WIB`;
+            } else if (status === 'saving') {
+                badge.className = 'inline-flex items-center gap-1.5 bg-blue-950/90 text-blue-300 border border-blue-600/60 px-2.5 py-0.5 rounded-full font-semibold';
+                dot.className = 'w-2 h-2 rounded-full bg-blue-400 live-dot';
+                text.textContent = customMessage || 'Menyimpan ke Cloud...';
+            } else {
+                badge.className = 'inline-flex items-center gap-1.5 bg-amber-950/90 text-amber-300 border border-amber-700/60 px-2.5 py-0.5 rounded-full font-semibold';
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                text.textContent = customMessage || 'Mode Lokal Aktif (Menunggu Koneksi Cloud)';
+            }
+        }
+
+        // Inisialisasi Firebase & Autentikasi sesuai aturan wajib
+        async function initCloudConnection() {
+            try {
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                    setCloudStatusUI('offline', 'Mode Memori Aktif (Tanpa Konfigurasi Cloud)');
+                    renderDashboard();
+                    return;
+                }
+
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // RULE 3: Auth Before Queries
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) {
+                        document.getElementById('footerUserIdDisplay').textContent = user.uid;
+                        subscribeToRoomData(currentRoomCode);
+                    }
+                });
+            } catch (err) {
+                console.error('Koneksi Firebase gagal:', err);
+                setCloudStatusUI('offline', 'Gagal terhubung ke Cloud');
+                renderDashboard();
+            }
+        }
+
+        // Berlangganan Data Real-Time dari Firestore (RULE 1: Strict Path)
+        function subscribeToRoomData(roomCode) {
+            if (!db || !currentUser) return;
+
+            const cleanRoom = sanitizeRoomCode(roomCode);
+            currentRoomCode = cleanRoom;
+
+            document.getElementById('activeRoomDisplay').textContent = cleanRoom;
+            document.getElementById('subHeaderRoomTag').textContent = `Lini: ${cleanRoom}`;
+            document.getElementById('modalSettingsRoomLabel').textContent = cleanRoom;
+            document.getElementById('resetModalRoomLabel').textContent = cleanRoom;
+
+            if (unsubscribeLineSnapshot) {
+                unsubscribeLineSnapshot();
+            }
+
+            setCloudStatusUI('saving', `Menyinkronkan Lini ${cleanRoom}...`);
+
+            // Path wajib sesuai RULE 1: /artifacts/{appId}/public/data/{collectionName}/{documentId}
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'assembly_monitoring_rooms', cleanRoom);
+
+            unsubscribeLineSnapshot = onSnapshot(
+                docRef,
+                async (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        appState = {
+                            poNumber: data.poNumber || 'PO-KMJ2-GC-001',
+                            styleName: data.styleName || 'PO-KMJ2-GC-001 — Koper Hardcase 24" Regular',
+                            targetPO: typeof data.targetPO === 'number' ? data.targetPO : 470,
+                            minDailyRate: typeof data.minDailyRate === 'number' ? data.minDailyRate : 15,
+                            maxDailyRate: typeof data.maxDailyRate === 'number' ? data.maxDailyRate : 18,
+                            skipSunday: typeof data.skipSunday === 'boolean' ? data.skipSunday : true,
+                            updatedAt: data.updatedAt || new Date().toISOString(),
+                            logs: Array.isArray(data.logs) ? data.logs : getDefaultState().logs
+                        };
+                        setCloudStatusUI('connected');
+                        renderDashboard();
+                    } else {
+                        // Jika dokumen belum ada di Cloud untuk kode lini ini, isi otomatis dengan Seed Data (Output 399, Target 470)
+                        const seedData = getDefaultState();
+                        appState = seedData;
+                        renderDashboard();
+                        await saveStateToCloud('Data awal (Output 399 / Target 470) diinisialisasi di Cloud.');
+                    }
+                },
+                (error) => {
+                    console.error('Error onSnapshot Firestore:', error);
+                    setCloudStatusUI('offline', 'Gangguan Sinkronisasi Cloud');
+                }
+            );
+        }
+
+        // Simpan seluruh perubahan ke Cloud Firestore
+        async function saveStateToCloud(toastSuccessMsg = '') {
+            appState.updatedAt = new Date().toISOString();
+            renderDashboard();
+
+            if (!db || !currentUser) {
+                if (toastSuccessMsg) showToast(toastSuccessMsg, 'success');
+                return;
+            }
+
+            try {
+                setCloudStatusUI('saving');
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'assembly_monitoring_rooms', currentRoomCode);
+                await setDoc(docRef, {
+                    poNumber: appState.poNumber,
+                    styleName: appState.styleName,
+                    targetPO: Number(appState.targetPO) || 470,
+                    minDailyRate: Number(appState.minDailyRate) || 15,
+                    maxDailyRate: Number(appState.maxDailyRate) || 18,
+                    skipSunday: Boolean(appState.skipSunday),
+                    updatedAt: appState.updatedAt,
+                    updatedBy: currentUser.uid,
+                    logs: appState.logs
+                });
+                setCloudStatusUI('connected');
+                if (toastSuccessMsg) {
+                    showToast(toastSuccessMsg, 'success');
+                }
+            } catch (err) {
+                console.error('Gagal menyimpan ke Cloud:', err);
+                setCloudStatusUI('offline', 'Gagal menyimpan ke Cloud');
+                showToast('Gagal menyimpan ke server Cloud. Periksa koneksi internet Anda.', 'warning');
+            }
+        }
+
+        function sanitizeRoomCode(raw) {
+            return String(raw || 'GEDUNG-C-LINE1')
+                .trim()
+                .toUpperCase()
+                .replace(/[^A-Z0-9-_]/g, '-')
+                .replace(/-+/g, '-') || 'GEDUNG-C-LINE1';
+        }
+
+        // Format Tanggal Bahasa Indonesia
+        function formatDateIndo(dateObj, includeDayName = true) {
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const dName = days[dateObj.getDay()];
+            const d = dateObj.getDate();
+            const m = months[dateObj.getMonth()];
+            const y = dateObj.getFullYear();
+            return includeDayName ? `${dName}, ${d} ${m} ${y}` : `${d} ${m} ${y}`;
+        }
+
+        function parseISODateLocal(isoStr) {
+            const parts = String(isoStr || '').split('-');
+            if (parts.length !== 3) return new Date();
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+
+        function getTodayISO() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // Menambahkan hari kerja (dengan opsi lompati hari Minggu)
+        function addWorkingDays(startDate, workDaysNeeded, skipSunday) {
+            const result = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            if (workDaysNeeded <= 0) return result;
+            let added = 0;
+            while (added < workDaysNeeded) {
+                result.setDate(result.getDate() + 1);
+                if (skipSunday && result.getDay() === 0) {
+                    continue; // Lewati hari Minggu
+                }
+                added++;
+            }
+            return result;
+        }
+
+        // Hitung Metrik Utama
+        function calculateMetrics() {
+            const totalOutput = appState.logs.reduce((sum, item) => sum + (Number(item.assemblyQty) || 0), 0);
+            const totalFG = appState.logs.reduce((sum, item) => sum + (Number(item.fgQty) || 0), 0);
+            const targetPO = Number(appState.targetPO) || 470;
+            const shortage = Math.max(0, targetPO - totalOutput);
+            const overProduction = Math.max(0, totalOutput - targetPO);
+            const wipStock = Math.max(0, totalOutput - totalFG);
+
+            const outputPercent = targetPO > 0 ? Math.min(100, (totalOutput / targetPO) * 100) : 0;
+            const fgPercent = totalOutput > 0 ? Math.min(100, (totalFG / totalOutput) * 100) : 0;
+
+            // Hitung rata-rata aktual dari log harian (selain baseline akumulasi)
+            const dailyLogsOnly = appState.logs.filter(l => !l.isBaseline);
+            let actualAvgRate = (appState.minDailyRate + appState.maxDailyRate) / 2;
+            if (dailyLogsOnly.length > 0) {
+                const sumDaily = dailyLogsOnly.reduce((s, l) => s + Number(l.assemblyQty || 0), 0);
+                actualAvgRate = sumDaily / dailyLogsOnly.length;
+            }
+
+            return {
+                targetPO,
+                totalOutput,
+                totalFG,
+                shortage,
+                overProduction,
+                wipStock,
+                outputPercent,
+                fgPercent,
+                actualAvgRate
+            };
+        }
+
+        // Render Seluruh UI Dashboard
+        function renderDashboard() {
+            const m = calculateMetrics();
+            const today = new Date();
+
+            // Header & Identitas PO
+            document.getElementById('currentDateDisplay').textContent = formatDateIndo(today, true);
+            document.getElementById('styleNameDisplay').textContent = appState.styleName;
+            document.getElementById('headerPoBadge').textContent = `PO: ${appState.poNumber}`;
+            document.getElementById('skipSundayToggle').checked = appState.skipSunday;
+            document.getElementById('quickMinRate').value = appState.minDailyRate;
+            document.getElementById('quickMaxRate').value = appState.maxDailyRate;
+            document.getElementById('speedRangeBadge').textContent = `${appState.minDailyRate} – ${appState.maxDailyRate} pcs/hari`;
+
+            // 4 Summary Cards
+            document.getElementById('cardTargetPO').textContent = m.targetPO.toLocaleString('id-ID');
+            document.getElementById('cardTotalOutput').textContent = m.totalOutput.toLocaleString('id-ID');
+            document.getElementById('cardOutputPercent').textContent = `${m.outputPercent.toFixed(2)}%`;
+            document.getElementById('cardShortage').textContent = m.shortage.toLocaleString('id-ID');
+            document.getElementById('cardTotalFG').textContent = m.totalFG.toLocaleString('id-ID');
+            document.getElementById('cardWipStock').textContent = `${m.wipStock.toLocaleString('id-ID')} pcs`;
+
+            const shortageBadge = document.getElementById('shortageStatusBadge');
+            const shortageTitle = document.getElementById('shortageTitleLabel');
+            if (m.shortage === 0) {
+                shortageTitle.textContent = 'Target PO Tercapai!';
+                shortageBadge.textContent = m.overProduction > 0 ? `Surplus +${m.overProduction} pcs` : '100% Lunas PO';
+                shortageBadge.className = 'font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded';
+            } else {
+                shortageTitle.textContent = 'Sisa Kekurangan (Shortage)';
+                const remPct = Math.max(0, 100 - m.outputPercent).toFixed(2);
+                shortageBadge.textContent = `Kurang ${remPct}%`;
+                shortageBadge.className = 'font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded';
+            }
+
+            // Progress Bars
+            document.getElementById('progressSummaryNote').textContent =
+                m.shortage > 0
+                    ? `${m.totalOutput} dari ${m.targetPO} pcs selesai dirakit (Masih kurang ${m.shortage} pcs)`
+                    : `Target PO ${m.targetPO} pcs telah selesai 100%! (Total Output: ${m.totalOutput} pcs)`;
+
+            document.getElementById('barAssemblyLabel').textContent =
+                `${m.totalOutput} / ${m.targetPO} pcs (${m.outputPercent.toFixed(2)}%)`;
+            document.getElementById('barAssemblyFill').style.width = `${m.outputPercent}%`;
+
+            document.getElementById('barFGLabel').textContent =
+                `${m.totalFG} / ${m.totalOutput} pcs terkirim (${m.wipStock} pcs masih di lantai Assembly)`;
+            document.getElementById('barFGFill').style.width = `${m.fgPercent}%`;
+
+            // Estimator Section
+            document.getElementById('estimatorShortageText').textContent = `${m.shortage} pcs`;
+            document.getElementById('scheduleShortageCount').textContent = m.shortage;
+            document.getElementById('sundayRuleNote').textContent = appState.skipSunday
+                ? 'Minggu Libur (Dilewati dalam estimasi)'
+                : 'Minggu Tetap Dihitung Masuk';
+
+            const minR = Math.max(1, Number(appState.minDailyRate) || 15);
+            const maxR = Math.max(1, Number(appState.maxDailyRate) || 18);
+            const actR = Math.max(1, m.actualAvgRate);
+
+            document.getElementById('optRateLabel').textContent = `${maxR} pcs/hr`;
+            document.getElementById('conRateLabel').textContent = `${minR} pcs/hr`;
+            document.getElementById('actRateLabel').textContent = `${actR.toFixed(1)} pcs/hr`;
+
+            if (m.shortage === 0) {
+                document.getElementById('optWorkDays').textContent = '0 Hari (Selesai)';
+                document.getElementById('optExactMath').textContent = 'Target PO sudah terpenuhi';
+                document.getElementById('optFinishDate').textContent = 'SELESAI HARI INI';
+
+                document.getElementById('conWorkDays').textContent = '0 Hari (Selesai)';
+                document.getElementById('conExactMath').textContent = 'Target PO sudah terpenuhi';
+                document.getElementById('conFinishDate').textContent = 'SELESAI HARI INI';
+
+                document.getElementById('actWorkDays').textContent = '0 Hari (Selesai)';
+                document.getElementById('actExactMath').textContent = 'Target PO sudah terpenuhi';
+                document.getElementById('actFinishDate').textContent = 'SELESAI HARI INI';
+            } else {
+                const optExact = m.shortage / maxR;
+                const optDays = Math.ceil(optExact);
+                const optDate = addWorkingDays(today, optDays, appState.skipSunday);
+
+                const conExact = m.shortage / minR;
+                const conDays = Math.ceil(conExact);
+                const conDate = addWorkingDays(today, conDays, appState.skipSunday);
+
+                const actExact = m.shortage / actR;
+                const actDays = Math.ceil(actExact);
+                const actDate = addWorkingDays(today, actDays, appState.skipSunday);
+
+                document.getElementById('optWorkDays').textContent = `${optDays} Hari Kerja`;
+                document.getElementById('optExactMath').textContent = `${m.shortage} / ${maxR} = ${optExact.toFixed(2)} hari`;
+                document.getElementById('optFinishDate').textContent = formatDateIndo(optDate, true);
+
+                document.getElementById('conWorkDays').textContent = `${conDays} Hari Kerja`;
+                document.getElementById('conExactMath').textContent = `${m.shortage} / ${minR} = ${conExact.toFixed(2)} hari`;
+                document.getElementById('conFinishDate').textContent = formatDateIndo(conDate, true);
+
+                document.getElementById('actWorkDays').textContent = `${actDays} Hari Kerja`;
+                document.getElementById('actExactMath').textContent = `${m.shortage} / ${actR.toFixed(1)} = ${actExact.toFixed(2)} hari`;
+                document.getElementById('actFinishDate').textContent = formatDateIndo(actDate, true);
+            }
+
+            // Render Simulasi Jadwal Harian
+            renderDailyProjection(today, m.shortage, minR, maxR);
+
+            // Form Footer Info
+            document.getElementById('formFooterOutput').textContent = `${m.totalOutput} pcs`;
+            document.getElementById('formFooterShortage').textContent = `${m.shortage} pcs`;
+
+            // Render Tabel Log
+            renderLogTable(m);
+        }
+
+        // Simulasi Jadwal Harian untuk menghabiskan sisa kekurangan
+        function renderDailyProjection(startDate, shortage, minRate, maxRate) {
+            const container = document.getElementById('dailyProjectionList');
+            container.innerHTML = '';
+
+            if (shortage <= 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded-lg p-3 text-center font-semibold">
+                        <i class="fa-solid fa-circle-check mr-1"></i> Seluruh kuota PO (${appState.targetPO} pcs) telah selesai dirakit!
+                    </div>
+                `;
+                return;
+            }
+
+            let remOpt = shortage;
+            let remCon = shortage;
+            const cursorDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            let dayStep = 0;
+            const maxSteps = Math.min(8, Math.ceil(shortage / minRate));
+
+            while ((remCon > 0 || remOpt > 0) && dayStep < maxSteps) {
+                cursorDate.setDate(cursorDate.getDate() + 1);
+                if (appState.skipSunday && cursorDate.getDay() === 0) {
+                    continue;
+                }
+                dayStep++;
+                const produceOpt = Math.min(remOpt, maxRate);
+                remOpt = Math.max(0, remOpt - produceOpt);
+
+                const produceCon = Math.min(remCon, minRate);
+                remCon = Math.max(0, remCon - produceCon);
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'bg-slate-800/90 border border-slate-700 rounded-lg px-3 py-2 flex items-center justify-between';
+                itemDiv.innerHTML = `
+                    <div>
+                        <span class="text-[11px] font-bold text-amber-300 block">Hari ke-${dayStep}: ${formatDateIndo(cursorDate, true)}</span>
+                        <span class="text-[11px] text-slate-400">Target +${minRate} s/d +${maxRate} pcs</span>
+                    </div>
+                    <div class="text-right font-mono text-[11px]">
+                        <span class="text-emerald-400 block">Sisa (${maxRate}/hr): ${remOpt} pcs</span>
+                        <span class="text-amber-300 block">Sisa (${minRate}/hr): ${remCon} pcs</span>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            }
+        }
+
+        // Render Tabel Riwayat Harian (Semua item bisa di-Edit & di-Hapus)
+        function renderLogTable(metrics) {
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('logCountBadge').textContent = `Total ${appState.logs.length} Catatan Log`;
+
+            appState.logs.forEach((log) => {
+                const tr = document.createElement('tr');
+                tr.className = log.isBaseline
+                    ? 'bg-slate-50/90 hover:bg-slate-100/80 transition'
+                    : 'hover:bg-slate-50 transition';
+
+                const dObj = parseISODateLocal(log.date);
+                const wipDelta = Math.max(0, (Number(log.assemblyQty) || 0) - (Number(log.fgQty) || 0));
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+                        ${formatDateIndo(dObj, true)}
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="${log.isBaseline ? 'bg-slate-200 text-slate-800' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'} text-xs font-semibold px-2.5 py-0.5 rounded-md">
+                            ${escapeHtml(log.shift)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-emerald-700 whitespace-nowrap">
+                        +${Number(log.assemblyQty).toLocaleString('id-ID')} pcs
+                    </td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-indigo-700 whitespace-nowrap">
+                        ${Number(log.fgQty).toLocaleString('id-ID')} pcs
+                    </td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${wipDelta > 0 ? 'text-rose-600' : 'text-slate-400'} whitespace-nowrap">
+                        ${wipDelta > 0 ? `+${wipDelta} pcs` : '0 pcs'}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 max-w-xs truncate" title="${escapeHtml(log.notes || '-')}">
+                        ${escapeHtml(log.notes || '-')}
+                    </td>
+                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                        <div class="inline-flex items-center gap-1">
+                            <button onclick="openEditLogModal('${log.id}')" class="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2.5 py-1 rounded-lg hover:bg-blue-50 transition cursor-pointer" title="Edit baris ini">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                            </button>
+                            ${!log.isBaseline ? `
+                                <button onclick="deleteLogItem('${log.id}')" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="Hapus baris ini">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('tableFootOutput').textContent = `${metrics.totalOutput.toLocaleString('id-ID')} pcs`;
+            document.getElementById('tableFootFG').textContent = `${metrics.totalFG.toLocaleString('id-ID')} pcs`;
+            document.getElementById('tableFootWIP').textContent = `${metrics.wipStock.toLocaleString('id-ID')} pcs`;
+            document.getElementById('tableFootShortageInfo').textContent = `Sisa Kekurangan PO: ${metrics.shortage.toLocaleString('id-ID')} pcs`;
+        }
+
+        // Fungsi Helper Form Input Harian
+        window.setQuickOutput = function(val) {
+            const asmInput = document.getElementById('inputAssemblyQty');
+            const fgInput = document.getElementById('inputFGQty');
+            asmInput.value = val;
+            fgInput.value = val;
+            asmInput.focus();
+        };
+
+        window.syncFGDefault = function(val) {
+            const fgInput = document.getElementById('inputFGQty');
+            if (fgInput.value === '' || Number(fgInput.value) > Number(val)) {
+                fgInput.value = val;
+            }
+        };
+
+        window.copyAssemblyToFG = function() {
+            const asmVal = document.getElementById('inputAssemblyQty').value;
+            document.getElementById('inputFGQty').value = asmVal || 0;
+        };
+
+        // Submit Log Harian Baru ke Cloud
+        window.handleAddDailyLog = async function(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('inputDate').value || getTodayISO();
+            const shiftVal = document.getElementById('inputShift').value;
+            const asmQty = parseInt(document.getElementById('inputAssemblyQty').value, 10) || 0;
+            const fgQty = parseInt(document.getElementById('inputFGQty').value, 10) || 0;
+            const notesVal = document.getElementById('inputNotes').value.trim();
+
+            if (asmQty <= 0 && fgQty <= 0) {
+                showToast('Masukkan jumlah Output Assembly atau Transfer FG minimal 1 pcs.', 'warning');
+                return;
+            }
+
+            const newLog = {
+                id: 'log-' + Date.now(),
+                date: dateVal,
+                shift: shiftVal,
+                assemblyQty: asmQty,
+                fgQty: fgQty,
+                notes: notesVal || 'Input harian Supervisor Gedung C',
+                isBaseline: false
+            };
+
+            appState.logs.push(newLog);
+
+            // Reset input angka & catatan
+            document.getElementById('inputAssemblyQty').value = '';
+            document.getElementById('inputFGQty').value = '';
+            document.getElementById('inputNotes').value = '';
+
+            const m = calculateMetrics();
+            await saveStateToCloud(`Tersimpan di Cloud! Total Output kini ${m.totalOutput} pcs (Kurang: ${m.shortage} pcs).`);
+        };
+
+        // Buka Modal Edit Baris Log (Bisa edit saldo awal maupun log harian)
+        window.openEditLogModal = function(id) {
+            const item = appState.logs.find(l => l.id === id);
+            if (!item) return;
+
+            document.getElementById('editLogId').value = item.id;
+            document.getElementById('editLogDate').value = item.date;
+            document.getElementById('editLogShift').value = item.shift;
+            document.getElementById('editLogAssemblyQty').value = item.assemblyQty;
+            document.getElementById('editLogFGQty').value = item.fgQty;
+            document.getElementById('editLogNotes').value = item.notes || '';
+
+            const modal = document.getElementById('editLogModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeEditLogModal = function() {
+            const modal = document.getElementById('editLogModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.saveEditLogModal = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editLogId').value;
+            const idx = appState.logs.findIndex(l => l.id === id);
+            if (idx === -1) return;
+
+            appState.logs[idx].date = document.getElementById('editLogDate').value || getTodayISO();
+            appState.logs[idx].shift = document.getElementById('editLogShift').value.trim() || 'Shift Reguler - Gedung C';
+            appState.logs[idx].assemblyQty = parseInt(document.getElementById('editLogAssemblyQty').value, 10) || 0;
+            appState.logs[idx].fgQty = parseInt(document.getElementById('editLogFGQty').value, 10) || 0;
+            appState.logs[idx].notes = document.getElementById('editLogNotes').value.trim();
+
+            window.closeEditLogModal();
+            const m = calculateMetrics();
+            await saveStateToCloud(`Data berhasil diedit! Total Output: ${m.totalOutput} pcs (Kurang: ${m.shortage} pcs).`);
+        };
+
+        // Hapus Baris Log Harian
+        window.deleteLogItem = async function(id) {
+            appState.logs = appState.logs.filter(item => item.id !== id);
+            await saveStateToCloud('Catatan harian dihapus & disinkronkan ke Cloud.');
+        };
+
+        // Update Kecepatan Rata-rata (15-18)
+        window.updateSpeedRates = async function() {
+            let minV = parseInt(document.getElementById('quickMinRate').value, 10) || 15;
+            let maxV = parseInt(document.getElementById('quickMaxRate').value, 10) || 18;
+            if (minV < 1) minV = 1;
+            if (maxV < minV) maxV = minV;
+
+            appState.minDailyRate = minV;
+            appState.maxDailyRate = maxV;
+            await saveStateToCloud(`Parameter kecepatan (${minV}–${maxV} pcs/hari) disimpan ke Cloud.`);
+        };
+
+        window.toggleSkipSunday = async function(checked) {
+            appState.skipSunday = checked;
+            await saveStateToCloud(checked ? 'Hari Minggu diabaikan dari hari kerja.' : 'Hari Minggu dihitung sebagai hari kerja.');
+        };
+
+        // Modal Pengaturan Parameter PO
+        window.openSettingsModal = function() {
+            document.getElementById('modalPoName').value = appState.styleName;
+            document.getElementById('modalTargetPO').value = appState.targetPO;
+            document.getElementById('modalMinRate').value = appState.minDailyRate;
+            document.getElementById('modalMaxRate').value = appState.maxDailyRate;
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeSettingsModal = function() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.saveSettingsModal = async function(e) {
+            e.preventDefault();
+            const styleVal = document.getElementById('modalPoName').value.trim() || 'PO-KMJ2-GC-001 — Koper Hardcase 24"';
+            const targetVal = parseInt(document.getElementById('modalTargetPO').value, 10) || 470;
+            const minVal = parseInt(document.getElementById('modalMinRate').value, 10) || 15;
+            const maxVal = Math.max(minVal, parseInt(document.getElementById('modalMaxRate').value, 10) || 18);
+
+            appState.styleName = styleVal;
+            appState.poNumber = styleVal.split('—')[0].trim();
+            appState.targetPO = targetVal;
+            appState.minDailyRate = minVal;
+            appState.maxDailyRate = maxVal;
+
+            window.closeSettingsModal();
+            await saveStateToCloud('Parameter PO berhasil disimpan ke Cloud!');
+        };
+
+        // Modal Sinkronisasi Lini / Buka di HP Lain
+        window.openSyncModal = function() {
+            document.getElementById('inputRoomCode').value = currentRoomCode;
+            const modal = document.getElementById('syncModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeSyncModal = function() {
+            const modal = document.getElementById('syncModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.quickSelectRoom = function(code) {
+            document.getElementById('inputRoomCode').value = code;
+        };
+
+        window.handleSwitchRoom = function(e) {
+            e.preventDefault();
+            const newRoom = sanitizeRoomCode(document.getElementById('inputRoomCode').value);
+            window.closeSyncModal();
+            subscribeToRoomData(newRoom);
+            showToast(`Berpindah ke Kode Sinkronisasi Lini: ${newRoom}`, 'info');
+        };
+
+        // Modal Backup / Restore JSON
+        window.openBackupModal = function() {
+            document.getElementById('backupJsonTextarea').value = JSON.stringify(appState, null, 2);
+            const modal = document.getElementById('backupModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeBackupModal = function() {
+            const modal = document.getElementById('backupModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.copyBackupJson = function() {
+            const textarea = document.getElementById('backupJsonTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('Kode Backup berhasil disalin!', 'success');
+            } catch (err) {
+                showToast('Silakan salin manual dari kotak teks.', 'warning');
+            }
+        };
+
+        window.importBackupJson = async function() {
+            try {
+                const raw = document.getElementById('backupJsonTextarea').value.trim();
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed.targetPO !== 'number' || !Array.isArray(parsed.logs)) {
+                    showToast('Format Kode Backup tidak valid.', 'warning');
+                    return;
+                }
+                appState = parsed;
+                window.closeBackupModal();
+                await saveStateToCloud('Data Backup berhasil dimuat & disinkronkan ke Cloud!');
+            } catch (err) {
+                showToast('Gagal membaca Kode Backup JSON.', 'warning');
+            }
+        };
+
+        // Modal Laporan WhatsApp
+        window.openWhatsAppModal = function() {
+            const m = calculateMetrics();
+            const today = new Date();
+            const minR = appState.minDailyRate;
+            const maxR = appState.maxDailyRate;
+
+            const optDays = m.shortage > 0 ? Math.ceil(m.shortage / maxR) : 0;
+            const conDays = m.shortage > 0 ? Math.ceil(m.shortage / minR) : 0;
+            const optDate = formatDateIndo(addWorkingDays(today, optDays, appState.skipSunday), true);
+            const conDate = formatDateIndo(addWorkingDays(today, conDays, appState.skipSunday), true);
+
+            const reportLines = [
+                `*LAPORAN MONITORING OUTPUT ASSEMBLY KOPER*`,
+                `*PT Kanindo Makmur Jaya 2 — GEDUNG C (${currentRoomCode})*`,
+                `📅 Tanggal: ${formatDateIndo(today, true)}`,
+                `🧳 Nomor PO / Style: ${appState.styleName}`,
+                `----------------------------------------`,
+                `🎯 *Target Total 1 PO:* ${m.targetPO} pcs`,
+                `✅ *Total Output Assembly:* ${m.totalOutput} pcs (${m.outputPercent.toFixed(2)}%)`,
+                `⏳ *Sisa Kekurangan (Shortage):* ${m.shortage} pcs`,
+                `----------------------------------------`,
+                `📦 *Terkirim ke Finish Good (FG):* ${m.totalFG} pcs`,
+                `🔧 *Saldo WIP (di Lantai Assembly):* ${m.wipStock} pcs`,
+                `----------------------------------------`,
+                `📈 *ESTIMASI PENYELESAIAN PO (${minR}-${maxR} pcs/hari):*`,
+                m.shortage > 0
+                    ? `• Target ${maxR} pcs/hr: *${optDays} Hari Kerja* (${optDate})\n• Target ${minR} pcs/hr: *${conDays} Hari Kerja* (${conDate})`
+                    : `• Status PO: *100% SELESAI (LUNAS)*`,
+                `----------------------------------------`,
+                `_Dilaporkan oleh: Supervisor Assembly Gedung C_`
+            ];
+
+            document.getElementById('waReportText').value = reportLines.join('\n');
+            const modal = document.getElementById('waModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeWhatsAppModal = function() {
+            const modal = document.getElementById('waModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.copyWhatsAppText = function() {
+            const textarea = document.getElementById('waReportText');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('Laporan WhatsApp berhasil disalin! Siap ditempel ke WA Grup.', 'success');
+            } catch (err) {
+                showToast('Gagal menyalin otomatis, silakan salin manual dari kotak teks.', 'warning');
+            }
+        };
+
+        // Modal Reset Baseline
+        window.openResetModal = function() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeResetModal = function() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.confirmResetData = async function() {
+            appState = getDefaultState();
+            window.closeResetModal();
+            await saveStateToCloud('Data di Cloud berhasil di-reset ke Baseline Awal (Output: 399, Kurang: 71, PO: 470).');
+        };
+
+        // Export ke CSV / Excel
+        window.exportToCSV = function() {
+            const m = calculateMetrics();
+            const rows = [
+                ['LAPORAN MONITORING OUTPUT ASSEMBLY & FINISH GOOD - GEDUNG C PT KANINDO MAKMUR JAYA 2'],
+                ['Kode Lini Cloud', currentRoomCode],
+                ['PO / Style', appState.styleName],
+                ['Target PO', m.targetPO, 'Total Output', m.totalOutput, 'Kekurangan', m.shortage, 'Terkirim FG', m.totalFG, 'WIP Assembly', m.wipStock],
+                [],
+                ['No', 'Tanggal', 'Shift / Keterangan', 'Output Assembly (pcs)', 'Dikirim ke FG (pcs)', 'Selisih WIP (pcs)', 'Catatan / No Bukti FG']
+            ];
+
+            appState.logs.forEach((log, idx) => {
+                const wip = Math.max(0, (Number(log.assemblyQty) || 0) - (Number(log.fgQty) || 0));
+                rows.push([
+                    idx + 1,
+                    log.date,
+                    `"${(log.shift || '').replace(/"/g, '""')}"`,
+                    log.assemblyQty,
+                    log.fgQty,
+                    wip,
+                    `"${(log.notes || '').replace(/"/g, '""')}"`
+                ]);
+            });
+
+            rows.push(['', 'TOTAL AKUMULASI', '', m.totalOutput, m.totalFG, m.wipStock, `Kekurangan PO: ${m.shortage} pcs`]);
+
+            const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.join(',')).join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `Laporan_Assembly_${currentRoomCode}_${getTodayISO()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('File CSV/Excel berhasil diunduh!', 'success');
+        };
+
+        // Toast Notification System (Tanpa alert browser)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let colors = 'bg-slate-900 border-emerald-500 text-white';
+            let icon = 'fa-circle-check text-emerald-400';
+            if (type === 'warning') {
+                colors = 'bg-amber-950 border-amber-500 text-amber-100';
+                icon = 'fa-triangle-exclamation text-amber-400';
+            } else if (type === 'info') {
+                colors = 'bg-slate-900 border-blue-500 text-white';
+                icon = 'fa-circle-info text-blue-400';
+            }
+
+            toast.className = `${colors} border-l-4 px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs sm:text-sm font-medium pointer-events-auto transition-all duration-300`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base shrink-0"></i>
+                <span class="flex-1">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Inisialisasi saat halaman dimuat
+        window.onload = function () {
+            document.getElementById('inputDate').value = getTodayISO();
+            renderDashboard();
+            initCloudConnection();
+        };
+    </script>
+</body>
+</html>
