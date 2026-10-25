@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoring Produksi & Transfer Finish Good - KMJC</title>
+  <title>ProdTrack FG Sync - Monitoring Produksi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
@@ -23,7 +23,7 @@
               <i class="fa-solid fa-rotate fa-spin mr-1"></i> Menghubungkan...
             </span>
           </div>
-          <p class="text-xs text-slate-500">Monitoring Total PO, Output Harian, Balance, Estimasi Selesai & Finish Good</p>
+          <p class="text-xs text-slate-500">Monitoring Total PO, Output Harian Per Tanggal, Balance, Estimasi Selesai & Finish Good</p>
         </div>
       </div>
 
@@ -41,12 +41,12 @@
     </div>
   </header>
 
-  <!-- PERINGATAN JIKA FIREBASE RULES MASIH TERKUNCI -->
+  <!-- PERINGATAN FIREBASE RULES -->
   <div id="rulesAlert" class="hidden max-w-7xl mx-auto px-4 mt-4">
     <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
       <div>
-        <strong><i class="fa-solid fa-triangle-exclamation mr-1"></i> Penyimpanan Cloud Ditolak Firebase (Permission Denied):</strong>
-        Buka menu <b>Realtime Database &rarr; Rules</b> di Firebase Console Anda, ubah <code>".read": true, ".write": true</code> lalu klik <b>Publish</b>. (Saat ini data tetap aman tersimpan di memori browser Anda).
+        <strong><i class="fa-solid fa-triangle-exclamation mr-1"></i> Perhatian:</strong>
+        Pastikan Rules Firebase Anda sudah diatur ke <code>".read": true, ".write": true</code> agar data tersimpan permanen dan sinkron ke semua perangkat.
       </div>
     </div>
   </div>
@@ -54,7 +54,7 @@
   <!-- MAIN CONTENT -->
   <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-    <!-- 5 KARTU RINGKASAN (DASHBOARD SUMMARY) -->
+    <!-- 5 KARTU RINGKASAN -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
@@ -102,7 +102,7 @@
       </div>
     </div>
 
-    <!-- FILTER & PENCARIAN -->
+    <!-- PENCARIAN & STATUS -->
     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
       <div class="relative flex-1 min-w-[240px]">
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
@@ -114,7 +114,7 @@
       </div>
     </div>
 
-    <!-- TABEL DAFTAR PO -->
+    <!-- TABEL UTAMA -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -122,7 +122,7 @@
             <tr class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200">
               <th class="py-3 px-4">No. PO & Style / Line</th>
               <th class="py-3 px-4 text-right">Target PO</th>
-              <th class="py-3 px-4 text-right">Output Harian & Total</th>
+              <th class="py-3 px-4 text-right">Output Harian (Per Tanggal) & Total</th>
               <th class="py-3 px-4 text-right">Kekurangan</th>
               <th class="py-3 px-4 text-center">Estimasi Selesai</th>
               <th class="py-3 px-4 text-right">Transfer Finish Good (FG)</th>
@@ -135,7 +135,7 @@
     </div>
   </main>
 
-  <!-- MODAL TAMBAH / EDIT PO -->
+  <!-- MODAL TAMBAH/EDIT PO -->
   <div id="modalPO" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
       <h3 id="modalPOTitle" class="text-lg font-bold text-slate-900 mb-4">Tambah PO Baru</h3>
@@ -159,19 +159,9 @@
             <input id="poTarget" required type="number" min="1" placeholder="1000" class="w-full px-3 py-2 border rounded-lg" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">Target Harian (pcs/hari)</label>
-            <input id="poDailyTarget" required type="number" min="1" placeholder="200" class="w-full px-3 py-2 border rounded-lg" />
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">Output Saat Ini (pcs)</label>
-            <input id="poCurrentOutput" type="number" min="0" value="0" class="w-full px-3 py-2 border rounded-lg" />
-          </div>
-        </div>
         <div>
-          <label class="block font-medium text-slate-700 mb-1">Sudah Dikirim ke Finish Good (pcs)</label>
-          <input id="poCurrentFG" type="number" min="0" value="0" class="w-full px-3 py-2 border rounded-lg" />
+          <label class="block font-medium text-slate-700 mb-1">Target Harian (pcs/hari)</label>
+          <input id="poDailyTarget" required type="number" min="1" placeholder="200" class="w-full px-3 py-2 border rounded-lg" />
         </div>
         <div class="flex justify-end gap-2 pt-3">
           <button type="button" onclick="closePOModal()" class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-100">Batal</button>
@@ -181,7 +171,7 @@
     </div>
   </div>
 
-  <!-- MODAL INPUT OUTPUT HARIAN / TRANSFER FG -->
+  <!-- MODAL INPUT OUTPUT HARIAN PER TANGGAL / TRANSFER FG -->
   <div id="modalTx" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
       <h3 id="modalTxTitle" class="text-lg font-bold text-slate-900 mb-1">Input Data</h3>
@@ -189,6 +179,12 @@
       <form onsubmit="saveTx(event)" class="space-y-3 text-sm">
         <input type="hidden" id="txPoId" />
         <input type="hidden" id="txType" />
+        
+        <div id="dateContainer">
+          <label class="block font-medium text-slate-700 mb-1">Tanggal Produksi</label>
+          <input id="txDate" type="date" class="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+
         <div>
           <label id="txLabel" class="block font-medium text-slate-700 mb-1">Jumlah (pcs)</label>
           <input id="txQty" required type="number" min="1" placeholder="Masukkan jumlah pcs..." class="w-full px-3 py-2 border rounded-lg text-lg font-bold" />
@@ -201,15 +197,14 @@
     </div>
   </div>
 
-  <!-- SCRIPT LOGIKA & REALTIME SYNC -->
+  <!-- SCRIPT FIREBASE & LOGIKA APLIKASI -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const DB_URL = "https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app";
-    const LOCAL_KEY = "kmjc_prodtrack_backup_v1";
+    const LOCAL_KEY = "kmjc_prodtrack_v2";
 
-    // Muat cadangan lokal terlebih dahulu agar saat di-refresh tidak pernah hilang
     let poList = [];
     const savedLocal = localStorage.getItem(LOCAL_KEY);
     if (savedLocal) {
@@ -217,26 +212,21 @@
     }
 
     let dbRef = null;
-    let isCloudConnected = false;
 
-    // Inisialisasi Firebase Realtime Database
     try {
       const app = initializeApp({ databaseURL: DB_URL });
       const db = getDatabase(app);
       dbRef = ref(db, "production_data");
 
       onValue(dbRef, (snapshot) => {
-        isCloudConnected = true;
         document.getElementById("rulesAlert").classList.add("hidden");
         updateBadge("cloud");
-
         const cloudData = snapshot.val();
         if (cloudData && Array.isArray(cloudData.items)) {
           poList = cloudData.items;
           localStorage.setItem(LOCAL_KEY, JSON.stringify(poList));
         } else if (cloudData === null && poList.length > 0) {
-          // Jika Cloud masih kosong tapi di browser sudah ada ketikan kita, kirim ke Cloud!
-          set(dbRef, { items: poList, updatedAt: new Date().toISOString() }).catch(handleFirebaseError);
+          set(dbRef, { items: poList, updatedAt: new Date().toISOString() });
         }
         renderAll();
       }, (error) => {
@@ -247,8 +237,7 @@
     }
 
     function handleFirebaseError(err) {
-      console.warn("Firebase Warning:", err);
-      isCloudConnected = false;
+      console.warn(err);
       updateBadge("local");
       document.getElementById("rulesAlert").classList.remove("hidden");
       renderAll();
@@ -259,33 +248,22 @@
       const statusText = document.getElementById("dbStatusText");
       if (mode === "cloud") {
         badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700";
-        badge.innerHTML = '<i class="fa-solid fa-cloud-Showers-heavy mr-1"></i> Live Sync Aktif (Semua Device)';
+        badge.innerHTML = '<i class="fa-solid fa-cloud mr-1"></i> Live Sync Aktif';
         statusText.innerText = "Terhubung ke Cloud Firebase (assemblykmjc)";
         statusText.className = "text-emerald-600 font-semibold";
       } else {
         badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700";
-        badge.innerHTML = '<i class="fa-solid fa-hard-drive mr-1"></i> Tersimpan di Browser (Cek Rules Firebase)';
-        statusText.innerText = "Mode Cadangan Browser (Buka Rules Firebase agar sinkron ke HP lain)";
+        badge.innerHTML = '<i class="fa-solid fa-hard-drive mr-1"></i> Mode Lokal';
+        statusText.innerText = "Tersimpan di Browser (Periksa Rules Firebase)";
         statusText.className = "text-amber-600 font-semibold";
       }
     }
 
     function syncData() {
-      // 1. Selalu simpan instan ke memori browser agar di-refresh tidak hilang
       localStorage.setItem(LOCAL_KEY, JSON.stringify(poList));
       renderAll();
-
-      // 2. Kirim ke Firebase Realtime Database
       if (dbRef) {
-        set(dbRef, {
-          items: poList,
-          updatedAt: new Date().toISOString()
-        }).then(() => {
-          updateBadge("cloud");
-          document.getElementById("rulesAlert").classList.add("hidden");
-        }).catch((err) => {
-          handleFirebaseError(err);
-        });
+        set(dbRef, { items: poList, updatedAt: new Date().toISOString() }).catch(handleFirebaseError);
       }
     }
 
@@ -300,11 +278,7 @@
         if (d.getDay() !== 0) added++; // Lewati hari Minggu
       }
       const dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-      return {
-        text: `${daysNeeded} Hari Kerja Lagi`,
-        sub: `Est: ${dateStr}`,
-        color: "bg-indigo-50 text-indigo-700"
-      };
+      return { text: `${daysNeeded} Hari Kerja Lagi`, sub: `Est: ${dateStr}`, color: "bg-indigo-50 text-indigo-700" };
     }
 
     window.renderAll = function () {
@@ -315,7 +289,8 @@
 
       poList.forEach(item => {
         const target = Number(item.target) || 0;
-        const output = Number(item.output) || 0;
+        // Hitung total output dari seluruh riwayat harian
+        const output = (item.dailyOutputs || []).reduce((acc, curr) => acc + Number(curr.qty), 0);
         const fg = Number(item.fg) || 0;
         const short = Math.max(0, target - output);
         const wip = Math.max(0, output - fg);
@@ -343,35 +318,46 @@
       );
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400">Belum ada data PO. Klik <b>"+ Tambah PO Baru"</b> di kanan atas untuk mulai menginput.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400">Belum ada data PO. Klik <b>"+ Tambah PO Baru"</b> di kanan atas untuk mulai.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = filtered.map(item => {
         const target = Number(item.target) || 0;
-        const output = Number(item.output) || 0;
+        const dailyOutputs = item.dailyOutputs || [];
+        const output = dailyOutputs.reduce((acc, curr) => acc + Number(curr.qty), 0);
         const fg = Number(item.fg) || 0;
         const dailyTarget = Number(item.dailyTarget) || 1;
-        const lastDaily = Number(item.lastDailyOutput) || 0;
         const short = Math.max(0, target - output);
         const wip = Math.max(0, output - fg);
         const pct = target > 0 ? Math.min(100, Math.round((output / target) * 100)) : 0;
-        const est = calcEstimate(short, lastDaily > 0 ? lastDaily : dailyTarget);
+        
+        // Ambil rata-rata output harian aktual atau target harian untuk estimasi
+        const avgDaily = dailyOutputs.length > 0 ? (output / dailyOutputs.length) : dailyTarget;
+        const est = calcEstimate(short, avgDaily);
+
+        // Buat daftar riwayat output harian per tanggal
+        const historyHtml = dailyOutputs.length > 0 
+          ? dailyOutputs.slice(-3).reverse().map(d => `<div class="text-[11px] text-slate-600">• ${d.date}: <strong class="text-blue-600">+${Number(d.qty).toLocaleString("id-ID")} pcs</strong></div>`).join("")
+          : '<div class="text-[11px] text-slate-400 italic">Belum ada input harian</div>';
 
         return `
-          <tr class="hover:bg-slate-50 transition">
+          <tr class="hover:bg-slate-50 transition align-top">
             <td class="py-3.5 px-4">
               <div class="flex items-center gap-2">
                 <span class="font-bold text-slate-900">${item.poNumber}</span>
                 <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${item.line}</span>
               </div>
               <div class="text-xs text-slate-600 mt-0.5">${item.style}</div>
-              <div class="text-[11px] text-slate-400">Target Harian: ${dailyTarget.toLocaleString("id-ID")} pcs/hr</div>
+              <div class="text-[11px] text-slate-400">Target Harian: ${dailyTarget.toLocaleString("id-ID")} pcs</div>
             </td>
             <td class="py-3.5 px-4 text-right font-bold text-slate-800">${target.toLocaleString("id-ID")} <span class="text-xs font-normal text-slate-400">pcs</span></td>
             <td class="py-3.5 px-4 text-right">
-              <div class="font-bold text-blue-600">${output.toLocaleString("id-ID")} pcs (${pct}%)</div>
-              <div class="text-xs text-emerald-600 font-medium">Hari ini: +${lastDaily.toLocaleString("id-ID")} pcs</div>
+              <div class="font-bold text-blue-600 text-base">${output.toLocaleString("id-ID")} pcs (${pct}%)</div>
+              <div class="mt-1 bg-slate-50 p-1.5 rounded border border-slate-100 text-left">
+                <div class="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Output Harian Terakhir:</div>
+                ${historyHtml}
+              </div>
             </td>
             <td class="py-3.5 px-4 text-right">
               <span class="px-2.5 py-1 rounded-lg font-bold text-xs ${short > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
@@ -390,15 +376,15 @@
               <div class="flex flex-col gap-1.5 items-center">
                 <div class="flex gap-1">
                   <button onclick="openTxModal('${item.id}', 'output')" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
-                    + Output
+                    + Output Harian
                   </button>
                   <button onclick="openTxModal('${item.id}', 'fg')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium">
                     + Kirim FG
                   </button>
                 </div>
                 <div class="flex gap-2 text-xs text-slate-400 mt-0.5">
-                  <button onclick="editPO('${item.id}')" class="hover:text-indigo-600" title="Edit PO"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                  <button onclick="deletePO('${item.id}')" class="hover:text-rose-600" title="Hapus PO"><i class="fa-solid fa-trash"></i> Hapus</button>
+                  <button onclick="editPO('${item.id}')" class="hover:text-indigo-600"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                  <button onclick="deletePO('${item.id}')" class="hover:text-rose-600"><i class="fa-solid fa-trash"></i> Hapus</button>
                 </div>
               </div>
             </td>
@@ -407,7 +393,6 @@
       }).join("");
     };
 
-    // FUNGSI MODAL TAMBAH & EDIT PO
     window.openPOModal = function () {
       document.getElementById("modalPOTitle").innerText = "Tambah PO Baru";
       document.getElementById("formPO").reset();
@@ -431,8 +416,6 @@
       document.getElementById("poLine").value = p.line;
       document.getElementById("poTarget").value = p.target;
       document.getElementById("poDailyTarget").value = p.dailyTarget;
-      document.getElementById("poCurrentOutput").value = p.output;
-      document.getElementById("poCurrentFG").value = p.fg;
       document.getElementById("modalPO").classList.remove("hidden");
       document.getElementById("modalPO").classList.add("flex");
     };
@@ -447,14 +430,17 @@
         line: document.getElementById("poLine").value.trim(),
         target: Number(document.getElementById("poTarget").value) || 0,
         dailyTarget: Number(document.getElementById("poDailyTarget").value) || 1,
-        output: Number(document.getElementById("poCurrentOutput").value) || 0,
-        fg: Number(document.getElementById("poCurrentFG").value) || 0,
-        lastDailyOutput: Number(document.getElementById("poCurrentOutput").value) || 0
+        dailyOutputs: [],
+        fg: 0
       };
 
       if (id) {
         const idx = poList.findIndex(x => x.id === id);
-        if (idx > -1) poList[idx] = { ...poList[idx], ...newObj };
+        if (idx > -1) {
+          newObj.dailyOutputs = poList[idx].dailyOutputs || [];
+          newObj.fg = poList[idx].fg || 0;
+          poList[idx] = newObj;
+        }
       } else {
         poList.unshift(newObj);
       }
@@ -469,21 +455,29 @@
       syncData();
     };
 
-    // FUNGSI MODAL INPUT OUTPUT & FG
     window.openTxModal = function (id, type) {
       const p = poList.find(x => x.id === id);
       if (!p) return;
       document.getElementById("txPoId").value = id;
       document.getElementById("txType").value = type;
       document.getElementById("txQty").value = "";
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("txDate").value = today;
+
+      const dateContainer = document.getElementById("dateContainer");
+
       if (type === "output") {
-        document.getElementById("modalTxTitle").innerText = "Input Output Harian";
-        document.getElementById("modalTxSub").innerText = `${p.poNumber} - ${p.style} (${p.line})`;
-        document.getElementById("txLabel").innerText = "Tambahan Output Hari Ini (pcs)";
+        document.getElementById("modalTxTitle").innerText = "Input Output Harian Per Tanggal";
+        document.getElementById("modalTxSub").innerText = `${p.poNumber} - ${p.style}`;
+        document.getElementById("txLabel").innerText = "Jumlah Output Pada Tanggal Tersebut (pcs)";
+        dateContainer.style.display = "block";
       } else {
         document.getElementById("modalTxTitle").innerText = "Transfer ke Finish Good";
-        document.getElementById("modalTxSub").innerText = `${p.poNumber} - Ready di Line: ${Math.max(0, p.output - p.fg)} pcs`;
+        const currentOut = (p.dailyOutputs || []).reduce((a,c) => a + Number(c.qty), 0);
+        document.getElementById("modalTxSub").innerText = `${p.poNumber} - Ready di Line: ${Math.max(0, currentOut - p.fg)} pcs`;
         document.getElementById("txLabel").innerText = "Jumlah Dikirim ke FG (pcs)";
+        dateContainer.style.display = "none";
       }
       document.getElementById("modalTx").classList.remove("hidden");
       document.getElementById("modalTx").classList.add("flex");
@@ -499,12 +493,23 @@
       const id = document.getElementById("txPoId").value;
       const type = document.getElementById("txType").value;
       const qty = Number(document.getElementById("txQty").value) || 0;
+      const date = document.getElementById("txDate").value;
       const idx = poList.findIndex(x => x.id === id);
       if (idx === -1 || qty <= 0) return;
 
+      if (!poList[idx].dailyOutputs) poList[idx].dailyOutputs = [];
+
       if (type === "output") {
-        poList[idx].output = (Number(poList[idx].output) || 0) + qty;
-        poList[idx].lastDailyOutput = qty;
+        if (!date) return alert("Pilih tanggal terlebih dahulu!");
+        // Cek apakah tanggal sudah pernah diinput sebelumnya, jika ya update atau tambahkan
+        const existingDateIdx = poList[idx].dailyOutputs.findIndex(d => d.date === date);
+        if (existingDateIdx > -1) {
+          poList[idx].dailyOutputs[existingDateIdx].qty += qty;
+        } else {
+          poList[idx].dailyOutputs.push({ date: date, qty: qty });
+          // Urutkan berdasarkan tanggal
+          poList[idx].dailyOutputs.sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
       } else {
         poList[idx].fg = (Number(poList[idx].fg) || 0) + qty;
       }
@@ -514,31 +519,58 @@
     };
 
     window.loadSampleData = function () {
-      if (poList.length > 0 && !confirm("Muat data contoh? Data yang ada saat ini akan diganti dengan contoh.")) return;
+      if (poList.length > 0 && !confirm("Muat data contoh? Data saat ini akan diganti.")) return;
       poList = [
-        { id: "PO_1", poNumber: "PO-2026-101", style: "Luggage Hardcase 24 Inch Black", line: "Line A1 - Assembly", target: 2500, dailyTarget: 500, output: 1200, fg: 1000, lastDailyOutput: 450 },
-        { id: "PO_2", poNumber: "PO-2026-102", style: "Travel Bag Cabin Series Navy", line: "Line A2 - Assembly", target: 1800, dailyTarget: 350, output: 450, fg: 300, lastDailyOutput: 300 }
+        { 
+          id: "PO_1", 
+          poNumber: "PO-2026-101", 
+          style: "Luggage Hardcase 24 Inch Black", 
+          line: "Line A1 - Assembly", 
+          target: 2500, 
+          dailyTarget: 500, 
+          dailyOutputs: [
+            { date: "2026-10-23", qty: 400 },
+            { date: "2026-10-24", qty: 450 },
+            { date: "2026-10-25", qty: 350 }
+          ], 
+          fg: 1000 
+        },
+        { 
+          id: "PO_2", 
+          poNumber: "PO-2026-102", 
+          style: "Travel Bag Cabin Series Navy", 
+          line: "Line A2 - Assembly", 
+          target: 1800, 
+          dailyTarget: 350, 
+          dailyOutputs: [
+            { date: "2026-10-24", qty: 200 },
+            { date: "2026-10-25", qty: 250 }
+          ], 
+          fg: 300 
+        }
       ];
       syncData();
     };
 
     window.exportCSV = function () {
       if (poList.length === 0) return alert("Belum ada data untuk di-export!");
-      const headers = ["No PO", "Style", "Line", "Target PO", "Output Produksi", "Kekurangan", "Terkirim FG", "Stok WIP Line"];
-      const rows = poList.map(p => [
-        `"${p.poNumber}"`, `"${p.style}"`, `"${p.line}"`,
-        p.target, p.output, Math.max(0, p.target - p.output), p.fg, Math.max(0, p.output - p.fg)
-      ]);
+      const headers = ["No PO", "Style", "Line", "Target PO", "Total Output", "Kekurangan", "Terkirim FG", "Stok WIP Line"];
+      const rows = poList.map(p => {
+        const out = (p.dailyOutputs || []).reduce((a,c) => a + Number(c.qty), 0);
+        return [
+          `"${p.poNumber}"`, `"${p.style}"`, `"${p.line}"`,
+          p.target, out, Math.max(0, p.target - out), p.fg, Math.max(0, out - p.fg)
+        ];
+      });
       const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Rekap_Produksi_FG_${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `Rekap_Produksi_${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
     };
 
-    // Render pertama kali saat halaman dibuka
     renderAll();
   </script>
 </body>
