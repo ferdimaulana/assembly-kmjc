@@ -5,210 +5,227 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assembly Tracker – Kanindo Makmur Jaya 2 Gedung C</title>
 
-  <!-- =====================================================
-       FIREBASE COMPAT SDK (v10)
-       Ganti firebaseConfig di bawah dengan config Anda!
-  ====================================================== -->
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 
   <style>
-    /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --primary:   #1a56db;
       --primary-d: #1e40af;
       --success:   #057a55;
       --danger:    #c81e1e;
-      --warning:   #92400e;
-      --bg:        #f3f4f6;
+      --bg:        #f1f5f9;
       --card:      #ffffff;
-      --text:      #111827;
-      --muted:     #6b7280;
-      --border:    #e5e7eb;
-      --radius:    12px;
+      --text:      #0f172a;
+      --muted:     #64748b;
+      --border:    #e2e8f0;
+      --radius:    14px;
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* HEADER */
+    /* ── HEADER ── */
     header {
-      background: linear-gradient(135deg, #1e40af 0%, #1a56db 60%, #2563eb 100%);
-      color: #fff; padding: 20px 24px 18px;
-      box-shadow: 0 4px 12px rgba(30,64,175,.35);
+      background: linear-gradient(135deg, #0f172a 0%, #1e40af 55%, #1a56db 100%);
+      color: #fff; padding: 16px 24px;
+      box-shadow: 0 4px 16px rgba(15,23,42,.4);
+      position: sticky; top: 0; z-index: 50;
     }
-    header .brand { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
-    header h1 { font-size: 22px; font-weight: 700; line-height: 1.2; }
-    header .subtitle { font-size: 13px; opacity: .8; margin-top: 2px; }
-    .header-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
-    .datetime-badge {
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
-      border-radius: 8px; padding: 6px 14px; font-size: 13px; text-align: right;
-    }
-    .datetime-badge span { display: block; font-size: 11px; opacity: .75; }
-
-    /* SYNC STATUS */
-    .sync-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 12px; border-radius: 100px;
-      font-size: 11px; font-weight: 700; letter-spacing: .5px;
-      margin-top: 8px; transition: all .3s;
-    }
-    .sync-pill.connecting { background: rgba(255,255,255,.15); color: rgba(255,255,255,.8); }
+    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .brand-block .brand { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .65; }
+    .brand-block h1 { font-size: 18px; font-weight: 800; }
+    .brand-block .sub { font-size: 12px; opacity: .7; margin-top: 1px; }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .sync-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+    .sync-pill.connecting { background: rgba(255,255,255,.12); color: rgba(255,255,255,.75); }
     .sync-pill.synced     { background: rgba(16,185,129,.25);  color: #6ee7b7; }
-    .sync-pill.error      { background: rgba(239,68,68,.25);   color: #fca5a5; }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .sync-pill.error      { background: rgba(239,68,68,.2);    color: #fca5a5; }
+    .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
     .sync-dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.25} }
+    #clock { font-size: 12px; opacity: .65; }
 
-    /* SETUP BANNER */
-    .setup-banner {
-      background: #fffbeb; border: 2px dashed #f59e0b;
-      border-radius: 12px; padding: 20px 22px; margin-bottom: 20px;
-    }
-    .setup-banner h3 { color: #92400e; font-size: 15px; margin-bottom: 8px; }
-    .setup-banner p  { font-size: 13px; color: #78350f; line-height: 1.6; }
-    .setup-banner code { background: #fef3c7; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
-
-    /* LAYOUT */
-    main { max-width: 980px; margin: 24px auto; padding: 0 16px 40px; }
-    .section-title {
-      font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--muted); margin: 28px 0 12px;
-    }
-
-    /* CARD */
-    .card {
-      background: var(--card); border-radius: var(--radius);
-      border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      padding: 20px 22px; margin-bottom: 16px;
-    }
-
-    /* KPI GRID */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
-    .kpi {
-      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px 18px; position: relative; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06);
-    }
-    .kpi::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; border-radius: var(--radius) var(--radius) 0 0; }
-    .kpi.blue::before   { background:#3b82f6; }
-    .kpi.green::before  { background:#10b981; }
-    .kpi.red::before    { background:#ef4444; }
-    .kpi.orange::before { background:#f59e0b; }
-    .kpi.purple::before { background:#8b5cf6; }
-    .kpi label { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); }
-    .kpi .val  { font-size:32px; font-weight:800; line-height:1.1; margin-top:4px; }
-    .kpi .sub  { font-size:12px; color:var(--muted); margin-top:2px; }
-    .kpi.blue   .val { color:#1a56db; }
-    .kpi.green  .val { color:#057a55; }
-    .kpi.red    .val { color:#c81e1e; }
-    .kpi.orange .val { color:#92400e; }
-    .kpi.purple .val { color:#6d28d9; }
-
-    /* PROGRESS */
-    .progress-wrap { margin: 14px 0 6px; }
-    .progress-label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
-    .progress-bg { background:#e5e7eb; border-radius:100px; height:18px; overflow:hidden; }
-    .progress-fill {
-      height:100%; border-radius:100px;
-      background: linear-gradient(90deg, #1a56db, #10b981);
-      transition: width .6s ease; position:relative;
-    }
-    .progress-fill::after {
-      content: attr(data-pct); position:absolute; right:8px; top:50%;
-      transform:translateY(-50%); font-size:11px; font-weight:700; color:#fff;
-    }
-
-    /* FORM */
-    .form-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:14px; }
-    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
-    .form-group input, .form-group select {
-      width:100%; padding:10px 12px; border:1.5px solid var(--border);
-      border-radius:8px; font-size:14px; outline:none; transition:border-color .2s;
-    }
-    .form-group input:focus, .form-group select:focus { border-color:var(--primary); }
-    .form-group small { font-size:11px; color:var(--muted); margin-top:4px; display:block; }
-
-    /* BUTTON */
-    .btn {
-      display:inline-flex; align-items:center; gap:6px;
-      padding:10px 20px; border:none; border-radius:8px;
-      font-size:14px; font-weight:600; cursor:pointer; transition:all .15s;
-    }
-    .btn-primary { background:var(--primary); color:#fff; }
-    .btn-primary:hover { background:var(--primary-d); transform:translateY(-1px); box-shadow:0 4px 10px rgba(26,86,219,.35); }
-    .btn-danger  { background:#fee2e2; color:var(--danger); }
-    .btn-danger:hover  { background:#fecaca; }
-    .btn-success { background:#d1fae5; color:var(--success); }
-    .btn-success:hover { background:#a7f3d0; }
-    .btn-sm { padding:5px 12px; font-size:12px; }
-    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-
-    /* ESTIMASI */
-    .est-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .est-item { padding:14px 16px; border-radius:10px; border:1px solid var(--border); }
-    .est-item.slow { background:#fffbeb; border-color:#f59e0b; }
-    .est-item.fast { background:#f0fdf4; border-color:#10b981; }
-    .est-item label { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); }
-    .est-item .date { font-size:18px; font-weight:800; margin-top:4px; }
-    .est-item.slow .date { color:#92400e; }
-    .est-item.fast .date { color:#057a55; }
-    .est-item .days { font-size:12px; color:var(--muted); }
-
-    /* TABLE */
-    .table-wrap { overflow-x:auto; margin-top:4px; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    thead th {
-      background:#f9fafb; border-bottom:2px solid var(--border);
-      padding:10px 12px; text-align:left; font-weight:700;
-      font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);
-    }
-    tbody tr { border-bottom:1px solid var(--border); transition:background .12s; }
-    tbody tr:last-child { border-bottom:none; }
-    tbody tr:hover { background:#f9fafb; }
-    tbody td { padding:10px 12px; }
-    .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:11px; font-weight:700; }
-    .badge-blue   { background:#dbeafe; color:#1e40af; }
-    .badge-green  { background:#d1fae5; color:#065f46; }
-    .badge-orange { background:#fef3c7; color:#92400e; }
-
-    /* ALERT */
-    .alert {
-      border-radius:10px; padding:14px 16px; border:1px solid;
-      font-size:13px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;
-    }
-    .alert.info    { background:#eff6ff; border-color:#93c5fd; color:#1e40af; }
-    .alert.success { background:#f0fdf4; border-color:#6ee7b7; color:#065f46; }
-    .alert.warn    { background:#fffbeb; border-color:#fcd34d; color:#92400e; }
-    .alert.danger  { background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
-    .alert .icon   { font-size:18px; flex-shrink:0; margin-top:-1px; }
-
-    /* MODAL */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; align-items:center; justify-content:center; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:#fff; border-radius:var(--radius); padding:28px 28px 22px; width:min(440px,92vw); box-shadow:0 20px 60px rgba(0,0,0,.25); }
-    .modal h3 { font-size:17px; font-weight:700; margin-bottom:16px; }
-    .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
-
-    /* LOADING OVERLAY */
+    /* ── LOADING ── */
     #loadingOverlay {
-      position:fixed; inset:0; background:rgba(255,255,255,.92);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:200; gap:16px;
+      position: fixed; inset: 0; background: rgba(255,255,255,.95);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 300; gap: 14px;
     }
-    #loadingOverlay .spinner {
-      width:44px; height:44px; border:4px solid #e5e7eb;
-      border-top-color:#1a56db; border-radius:50%;
-      animation: spin .8s linear infinite;
-    }
+    .spinner { width: 42px; height: 42px; border: 4px solid #e2e8f0; border-top-color: #1a56db; border-radius: 50%; animation: spin .75s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loadingOverlay p { font-size:14px; color:var(--muted); }
 
-    @media(max-width:600px) {
-      .est-grid { grid-template-columns:1fr; }
-      .kpi .val  { font-size:26px; }
+    /* ── PAGES ── */
+    .page { display: none; max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+    .page.active { display: block; }
+
+    /* ── SECTION TITLE ── */
+    .sec { font-size: 11px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); margin: 28px 0 12px; }
+
+    /* ── CARD ── */
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.05); padding: 20px 22px; }
+
+    /* ── BUTTON ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
+    .btn-primary  { background: var(--primary); color: #fff; }
+    .btn-primary:hover  { background: var(--primary-d); box-shadow: 0 4px 12px rgba(26,86,219,.35); transform: translateY(-1px); }
+    .btn-success  { background: #dcfce7; color: #166534; }
+    .btn-success:hover  { background: #bbf7d0; }
+    .btn-danger   { background: #fee2e2; color: #991b1b; }
+    .btn-danger:hover   { background: #fecaca; }
+    .btn-ghost    { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover    { background: var(--bg); color: var(--text); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px,1fr)); gap: 14px; }
+    .fg { }
+    .fg label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .fg input, .fg select, .fg textarea {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+      border-radius: 9px; font-size: 14px; outline: none; transition: border-color .2s; background: #fff;
     }
-    ::-webkit-scrollbar { width:6px; height:6px; }
-    ::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:4px; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--primary); }
+    .fg small { font-size: 11px; color: var(--muted); margin-top: 3px; display: block; }
+
+    /* ── ALERT ── */
+    .alert { border-radius: 10px; padding: 12px 15px; border: 1px solid; font-size: 13px; display: flex; align-items: flex-start; gap: 9px; }
+    .alert.info    { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+    .alert.success { background: #f0fdf4; border-color: #86efac; color: #166534; }
+    .alert.warn    { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: var(--radius); padding: 26px; width: min(480px, 100%); box-shadow: 0 24px 64px rgba(0,0,0,.25); max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h3 { font-size: 17px; font-weight: 800; }
+    .modal-close { cursor: pointer; font-size: 20px; color: var(--muted); background: none; border: none; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ════════════════════════════════════════
+       DASHBOARD — PO CARDS GRID
+    ════════════════════════════════════════ */
+    .dashboard-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .dashboard-top h2 { font-size: 20px; font-weight: 800; }
+
+    /* Summary KPI row */
+    .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 6px; }
+    .sum-kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .sum-kpi label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .sum-kpi .val  { font-size: 26px; font-weight: 900; margin-top: 2px; }
+    .sum-kpi.blue  .val { color: #1a56db; }
+    .sum-kpi.green .val { color: #057a55; }
+    .sum-kpi.red   .val { color: #c81e1e; }
+    .sum-kpi.purple .val { color: #6d28d9; }
+
+    /* PO Cards */
+    .po-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+    .po-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      cursor: pointer; transition: all .2s; overflow: hidden;
+    }
+    .po-card:hover { box-shadow: 0 8px 24px rgba(26,86,219,.15); transform: translateY(-2px); border-color: #93c5fd; }
+    .po-card-top { padding: 16px 18px 12px; }
+    .po-card-head { display: flex; justify-content: space-between; align-items: flex-start; }
+    .po-name { font-size: 15px; font-weight: 800; color: var(--text); }
+    .po-product { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .po-status-badge { padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 800; letter-spacing: .5px; flex-shrink: 0; }
+    .po-status-badge.active   { background: #dbeafe; color: #1e40af; }
+    .po-status-badge.done     { background: #dcfce7; color: #166534; }
+    .po-status-badge.critical { background: #fef3c7; color: #92400e; }
+
+    .po-stats { display: flex; gap: 16px; margin-top: 10px; }
+    .po-stat label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .po-stat .n { font-size: 20px; font-weight: 900; }
+    .po-stat.green .n { color: #057a55; }
+    .po-stat.red   .n { color: #c81e1e; }
+    .po-stat.purple .n { color: #6d28d9; }
+
+    /* Progress bar inside card */
+    .po-card-bar { height: 6px; background: #e2e8f0; }
+    .po-card-bar-fill { height: 100%; background: linear-gradient(90deg, #1a56db, #10b981); transition: width .6s; }
+    .po-card-bottom { padding: 10px 18px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .po-pct { font-size: 12px; font-weight: 800; color: var(--primary); }
+    .po-est { font-size: 11px; color: var(--muted); }
+
+    .empty-state { text-align: center; padding: 56px 24px; color: var(--muted); }
+    .empty-state .icon { font-size: 52px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ════════════════════════════════════════
+       DETAIL PAGE
+    ════════════════════════════════════════ */
+    .detail-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .detail-nav h2 { font-size: 20px; font-weight: 800; }
+    .detail-nav .po-meta { font-size: 13px; color: var(--muted); }
+    .breadcrumb { font-size: 12px; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .breadcrumb:hover { color: var(--primary); }
+
+    /* KPI Grid */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 14px; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0; }
+    .kpi.blue::before   { background: #3b82f6; }
+    .kpi.green::before  { background: #10b981; }
+    .kpi.red::before    { background: #ef4444; }
+    .kpi.orange::before { background: #f59e0b; }
+    .kpi.purple::before { background: #8b5cf6; }
+    .kpi label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .kpi .val  { font-size: 30px; font-weight: 900; margin-top: 3px; line-height: 1; }
+    .kpi .sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .kpi.blue   .val { color: #1a56db; }
+    .kpi.green  .val { color: #057a55; }
+    .kpi.red    .val { color: #c81e1e; }
+    .kpi.orange .val { color: #92400e; }
+    .kpi.purple .val { color: #6d28d9; }
+
+    /* Progress */
+    .prog-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 7px; }
+    .prog-bg { background: #e2e8f0; border-radius: 100px; height: 16px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, #1a56db, #10b981); transition: width .6s; position: relative; }
+    .prog-fill::after { content: attr(data-pct); position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:10px; font-weight:800; color:#fff; }
+
+    /* Estimation */
+    .est-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .est-item { padding: 14px 16px; border-radius: 11px; border: 1px solid; }
+    .est-item.slow { background: #fffbeb; border-color: #f59e0b; }
+    .est-item.fast { background: #f0fdf4; border-color: #10b981; }
+    .est-item label { font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+    .est-item .date { font-size: 16px; font-weight: 900; margin-top: 4px; }
+    .est-item.slow .date { color: #92400e; }
+    .est-item.fast .date { color: #057a55; }
+    .est-item .days { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Table */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { background: #f8fafc; border-bottom: 2px solid var(--border); padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody td { padding: 9px 12px; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 800; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-orange { background: #fef3c7; color: #92400e; }
+    .badge-slate  { background: #e2e8f0; color: #475569; }
+
+    /* Confirm modal */
+    .confirm-box { text-align: center; }
+    .confirm-box .icon { font-size: 44px; margin-bottom: 10px; }
+    .confirm-box h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+    .confirm-box p { font-size: 13px; color: var(--muted); }
+
+    @media (max-width: 600px) {
+      .est-grid { grid-template-columns: 1fr; }
+      .kpi .val  { font-size: 24px; }
+      .po-stats  { flex-wrap: wrap; gap: 10px; }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -216,196 +233,257 @@
 <!-- LOADING -->
 <div id="loadingOverlay">
   <div class="spinner"></div>
-  <p>Menghubungkan ke database…</p>
+  <p style="color:#64748b;font-size:14px;">Menghubungkan ke database…</p>
 </div>
 
 <!-- HEADER -->
 <header>
-  <div class="header-row">
-    <div>
+  <div class="header-inner">
+    <div class="brand-block">
       <div class="brand">📦 Assembly Tracker</div>
       <h1>Kanindo Makmur Jaya 2 – Gedung C</h1>
-      <div class="subtitle">Assembly KMJ2C · Monitoring Output &amp; Pengiriman ke Finish Goods</div>
+      <div class="sub">Supervisor Assembly · Multi-PO Dashboard</div>
+    </div>
+    <div class="header-right">
       <div class="sync-pill connecting" id="syncPill">
         <span class="sync-dot pulse"></span>
         <span id="syncText">Menghubungkan…</span>
       </div>
-    </div>
-    <div class="datetime-badge">
-      <span>Tanggal &amp; Waktu</span>
-      <strong id="clock">–</strong>
+      <span id="clock"></span>
     </div>
   </div>
 </header>
 
-<main>
+<!-- ══════════════════════════════════════════
+     PAGE: DASHBOARD
+══════════════════════════════════════════ -->
+<div id="pageDashboard" class="page active">
 
-  <!-- SETUP BANNER (disembunyikan setelah Firebase dikonfigurasi) -->
-  <div class="setup-banner" id="setupBanner" style="display:none">
-    <h3>⚙️ Konfigurasi Firebase Diperlukan</h3>
-    <p>
-      Isi <code>firebaseConfig</code> di bagian script dengan data dari Firebase Console Anda.<br/>
-      Lihat panduan di file <strong>PANDUAN_SETUP.md</strong> yang ada di folder yang sama.
-    </p>
+  <div style="margin-top:4px" class="dashboard-top">
+    <div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:4px;">Overview</div>
+      <h2>Semua Purchase Order</h2>
+    </div>
+    <button class="btn btn-primary" onclick="openAddPoModal()">＋ Tambah PO Baru</button>
   </div>
 
-  <!-- ALERT STATUS -->
-  <div id="alertBox" class="alert info" style="margin-top:4px;">
-    <span class="icon">ℹ️</span>
-    <span id="alertMsg">Memuat status produksi…</span>
+  <!-- Summary KPI -->
+  <div class="sec">📊 Ringkasan Semua PO</div>
+  <div class="summary-row">
+    <div class="sum-kpi blue">
+      <label>Total PO Aktif</label>
+      <div class="val" id="sumTotal">–</div>
+    </div>
+    <div class="sum-kpi green">
+      <label>Output Keseluruhan</label>
+      <div class="val" id="sumOutput">–</div>
+    </div>
+    <div class="sum-kpi red">
+      <label>Total Kekurangan</label>
+      <div class="val" id="sumKurang">–</div>
+    </div>
+    <div class="sum-kpi purple">
+      <label>Total Dikirim FG</label>
+      <div class="val" id="sumFG">–</div>
+    </div>
+  </div>
+
+  <!-- PO Grid -->
+  <div class="sec">🗂️ Daftar PO</div>
+  <div class="po-grid" id="poGrid">
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      <p>Memuat data PO…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: DETAIL PO
+══════════════════════════════════════════ -->
+<div id="pageDetail" class="page">
+
+  <!-- Nav -->
+  <div class="detail-nav">
+    <div class="breadcrumb" onclick="showDashboard()">← Semua PO</div>
+    <div style="color:var(--border)">|</div>
+    <div>
+      <div id="detailPoName" style="font-size:18px;font-weight:800;"></div>
+      <div id="detailPoMeta" style="font-size:12px;color:var(--muted);margin-top:1px;"></div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="openEditPoModal()">✏️ Edit PO</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeletePo()">🗑 Hapus PO</button>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert info" id="detailAlert" style="margin-bottom:16px;">
+    <span style="font-size:18px;">ℹ️</span>
+    <span id="detailAlertMsg">Memuat…</span>
   </div>
 
   <!-- KPI -->
-  <div class="section-title">📊 Ringkasan PO Saat Ini</div>
+  <div class="sec">📊 Ringkasan PO Ini</div>
   <div class="kpi-grid">
-    <div class="kpi blue">
-      <label>Total PO</label>
-      <div class="val" id="kpiPO">–</div>
-      <div class="sub">Target keseluruhan</div>
-    </div>
-    <div class="kpi green">
-      <label>Output Selesai</label>
-      <div class="val" id="kpiDone">–</div>
-      <div class="sub">QC Sudah OK</div>
-    </div>
-    <div class="kpi red">
-      <label>Kekurangan</label>
-      <div class="val" id="kpiKurang">–</div>
-      <div class="sub">Sisa target</div>
-    </div>
-    <div class="kpi purple">
-      <label>Dikirim ke FG</label>
-      <div class="val" id="kpiFG">–</div>
-      <div class="sub">Finish Goods</div>
-    </div>
-    <div class="kpi orange">
-      <label>Belum Dikirim</label>
-      <div class="val" id="kpiBelumFG">–</div>
-      <div class="sub">Proses Packing</div>
-    </div>
+    <div class="kpi blue">  <label>Target PO</label>  <div class="val" id="dKpiPO">–</div>   <div class="sub">Total unit</div> </div>
+    <div class="kpi green"> <label>Selesai</label>     <div class="val" id="dKpiDone">–</div> <div class="sub">Unit terakit</div> </div>
+    <div class="kpi red">   <label>Kekurangan</label>  <div class="val" id="dKpiLeft">–</div> <div class="sub">Sisa target</div> </div>
+    <div class="kpi purple"><label>Dikirim FG</label>  <div class="val" id="dKpiFG">–</div>   <div class="sub">Finish Goods</div></div>
+    <div class="kpi orange"><label>Belum FG</label>    <div class="val" id="dKpiBelum">–</div><div class="sub">Di assembly</div> </div>
   </div>
 
-  <div class="card" style="margin-bottom:0">
-    <div class="progress-wrap">
-      <div class="progress-label">
-        <span>Progress PO</span>
-        <strong id="pctLabel">0%</strong>
-      </div>
-      <div class="progress-bg">
-        <div class="progress-fill" id="progressFill" style="width:0%" data-pct="0%"></div>
-      </div>
-    </div>
+  <!-- Progress -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="prog-label"><span>Progress PO</span><strong id="dPct">0%</strong></div>
+    <div class="prog-bg"><div class="prog-fill" id="dProgFill" style="width:0%" data-pct="0%"></div></div>
   </div>
 
-  <!-- ESTIMASI -->
-  <div class="section-title">🗓️ Estimasi Penyelesaian</div>
+  <!-- Estimasi -->
+  <div class="sec">🗓️ Estimasi Penyelesaian</div>
   <div class="card">
     <div class="est-grid">
       <div class="est-item slow">
-        <label>⏱ Skenario Lambat (15/hari)</label>
-        <div class="date" id="estSlow">–</div>
-        <div class="days" id="estSlowDays">–</div>
+        <label>⏱ Lambat (15/hari)</label>
+        <div class="date" id="dEstSlow">–</div>
+        <div class="days" id="dEstSlowDays"></div>
       </div>
       <div class="est-item fast">
-        <label>⚡ Skenario Cepat (18/hari)</label>
-        <div class="date" id="estFast">–</div>
-        <div class="days" id="estFastDays">–</div>
+        <label>⚡ Cepat (18/hari)</label>
+        <div class="date" id="dEstFast">–</div>
+        <div class="days" id="dEstFastDays"></div>
       </div>
     </div>
-    <div style="margin-top:12px; font-size:12px; color:var(--muted);">
-      ⚙️ Rata-rata 10-15 unit/hari · Hari kerja (Senin–Jum'at). Weekend libur.
-    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);">⚙️ Hari kerja Senin–Sabtu. Minggu libur.</div>
   </div>
 
-  <!-- INPUT FORM -->
-  <div class="section-title">➕ Input Output Harian</div>
+  <!-- Input Harian -->
+  <div class="sec">➕ Input Output Harian</div>
   <div class="card">
-    <div class="form-row">
-      <div class="form-group">
-        <label for="inDate">Tanggal</label>
-        <input type="date" id="inDate" />
+    <div class="form-grid">
+      <div class="fg">
+        <label>Tanggal</label>
+        <input type="date" id="logDate" />
       </div>
-      <div class="form-group">
-        <label for="inShift">Shift</label>
-        <select id="inShift">
+      <div class="fg">
+        <label>Shift</label>
+        <select id="logShift">
           <option value="Pagi">Pagi</option>
           <option value="Siang">Siang</option>
           <option value="Malam">Malam</option>
           <option value="Full">Full Day</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="inOutput">Output Hari Ini</label>
-        <input type="number" id="inOutput" min="0" placeholder="Contoh: 18" />
-        <small>Unit yang selesai dirakit</small>
+      <div class="fg">
+        <label>Output Hari Ini</label>
+        <input type="number" id="logOutput" min="0" placeholder="Contoh: 18" />
+        <small>Unit selesai dirakit</small>
       </div>
-      <div class="form-group">
-        <label for="inFG">Dikirim ke FG</label>
-        <input type="number" id="inFG" min="0" placeholder="Contoh: 20" />
-        <small>Unit ke Finish Goods hari ini</small>
+      <div class="fg">
+        <label>Dikirim ke FG</label>
+        <input type="number" id="logFG" min="0" placeholder="Contoh: 20" />
+        <small>Unit ke Finish Goods</small>
       </div>
-      <div class="form-group">
-        <label for="inNote">Catatan</label>
-        <input type="text" id="inNote" placeholder="Opsional…" />
+      <div class="fg" style="grid-column: span 2;">
+        <label>Catatan</label>
+        <input type="text" id="logNote" placeholder="Opsional…" />
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="addEntry()">💾 Simpan Log</button>
-      <button class="btn btn-success" onclick="openPoModal()">🔧 Ubah Target PO</button>
+      <button class="btn btn-primary" onclick="addLog()">💾 Simpan Log</button>
     </div>
   </div>
 
-  <!-- LOG TABLE -->
-  <div class="section-title">📋 Log Output Harian</div>
-  <div class="card" style="padding:0">
-    <div class="table-wrap">
+  <!-- Log Table -->
+  <div class="sec">📋 Log Output Harian</div>
+  <div class="card" style="padding:0;">
+    <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Tanggal</th>
-            <th>Shift</th>
-            <th>Output</th>
-            <th>Kirim FG</th>
-            <th>Kum. Output</th>
-            <th>Kum. FG</th>
-            <th>Catatan</th>
-            <th>Aksi</th>
+            <th>#</th><th>Tanggal</th><th>Shift</th>
+            <th>Output</th><th>Kirim FG</th>
+            <th>Kum. Output</th><th>Kum. FG</th>
+            <th>Catatan</th><th>Aksi</th>
           </tr>
         </thead>
-        <tbody id="logBody">
-          <tr>
-            <td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Memuat data…</td>
-          </tr>
-        </tbody>
+        <tbody id="logBody"></tbody>
       </table>
     </div>
   </div>
 
-</main>
+</div>
 
-<!-- MODAL UBAH PO -->
-<div class="modal-overlay" id="poModal">
+<!-- ══════════════════════════════════════════
+     MODAL: TAMBAH / EDIT PO
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalPo">
   <div class="modal">
-    <h3>🔧 Ubah Target PO</h3>
-    <div class="form-row" style="grid-template-columns:1fr;">
-      <div class="form-group">
-        <label for="moPO">Total PO Baru</label>
-        <input type="number" id="moPO" min="1" />
+    <div class="modal-header">
+      <h3 id="modalPoTitle">➕ Tambah PO Baru</h3>
+      <button class="modal-close" onclick="closeModalPo()">✕</button>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="fg">
+        <label>Nomor / Nama PO <span style="color:#ef4444">*</span></label>
+        <input type="text" id="mpName" placeholder="Contoh: PO-001 / KMJ-OKT-001" />
       </div>
-      <div class="form-group">
-        <label for="moBase">Output Awal (sudah ada sebelum log)</label>
-        <input type="number" id="moBase" min="0" />
-        <small>Contoh: 399 unit sudah selesai sebelum tracking dimulai</small>
+      <div class="fg">
+        <label>Nama Produk / Koper</label>
+        <input type="text" id="mpProduct" placeholder="Contoh: Koper 20 inch Polos" />
       </div>
-      <div class="form-group">
-        <label for="moFGBase">FG Terkirim Awal</label>
-        <input type="number" id="moFGBase" min="0" />
+      <div class="fg">
+        <label>Target PO (unit) <span style="color:#ef4444">*</span></label>
+        <input type="number" id="mpTarget" min="1" placeholder="Contoh: 470" />
+      </div>
+      <div class="fg">
+        <label>Output Awal (sudah ada sebelum tracking)</label>
+        <input type="number" id="mpBase" min="0" placeholder="Contoh: 399" />
+        <small>Isi jika sudah ada progress sebelum mulai tracking di sini</small>
+      </div>
+      <div class="fg">
+        <label>FG Terkirim Awal</label>
+        <input type="number" id="mpFGBase" min="0" placeholder="0" />
+        <small>Jumlah yang sudah terkirim ke FG sebelum tracking dimulai</small>
+      </div>
+      <div class="fg">
+        <label>Tanggal Mulai PO</label>
+        <input type="date" id="mpStart" />
       </div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-danger btn-sm" onclick="closePoModal()">Batal</button>
-      <button class="btn btn-primary btn-sm" onclick="savePoSettings()">Simpan</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalPo()">Batal</button>
+      <button class="btn btn-primary" id="modalPoSaveBtn" onclick="savePo()">Simpan PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KONFIRMASI HAPUS PO -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal" style="max-width:380px;">
+    <div class="confirm-box">
+      <div class="icon">⚠️</div>
+      <h3>Hapus PO Ini?</h3>
+      <p id="confirmMsg" style="margin-top:6px;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalConfirm()">Batal</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KONFIRMASI HAPUS LOG -->
+<div class="modal-overlay" id="modalConfirmLog">
+  <div class="modal" style="max-width:360px;">
+    <div class="confirm-box">
+      <div class="icon">🗑️</div>
+      <h3>Hapus Entri Log?</h3>
+      <p>Data log ini akan dihapus permanen.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalConfirmLog()">Batal</button>
+      <button class="btn btn-danger" id="confirmLogOkBtn">Hapus</button>
     </div>
   </div>
 </div>
@@ -413,7 +491,6 @@
 <script>
 // ================================================================
 //  ⚠️  KONFIGURASI FIREBASE — GANTI DENGAN CONFIG ANDA!
-//  Lihat PANDUAN_SETUP.md untuk langkah-langkah mendapatkan config ini.
 // ================================================================
 const firebaseConfig = {
   apiKey:            "AIzaSyDwad67lipZZm6eVT0CuwlNqVIc6hVKrhc",
@@ -422,324 +499,431 @@ const firebaseConfig = {
   projectId:         "assemblykmjc",
   storageBucket:     "assemblykmjc.firebasestorage.app",
   messagingSenderId: "340910060681",
-  appId:             "1:340910060681:web:5343595a0ffbe9945dc258"
+  appId:             "1:340910060681:web:5343595a0ffbe9945dc258",
+  measurementId:     "G-JNJH1VBYE5"
 };
 // ================================================================
 
-// ── Cek apakah sudah dikonfigurasi ──
 const isConfigured = !firebaseConfig.apiKey.includes("GANTI");
 
-let db = null;
-let settingsRef = null;
-let logsRef     = null;
-
-// Cache data lokal (diperbarui oleh Firebase listener)
-let localState = {
-  po: 470,
-  baseOutput: 399,
-  baseFG: 0,
-  logs: []          // array diurutkan, tiap item punya .key (Firebase key)
-};
+// ── STATE ──
+// pos: { [poId]: { name, product, target, baseOutput, baseFG, startDate, logs: {[logId]: {...}} } }
+let allPos = {};
+let currentPoId = null;
+let db = null, posRef = null;
 
 // ── INIT FIREBASE ──
 function initFirebase() {
   if (!isConfigured) {
-    document.getElementById('setupBanner').style.display = 'block';
-    document.getElementById('loadingOverlay').style.display = 'none';
-    setSyncStatus('error', '⚠️ Firebase belum dikonfigurasi');
-    // Fallback ke localStorage agar tetap bisa jalan lokal
     fallbackToLocal();
     return;
   }
-
   try {
     firebase.initializeApp(firebaseConfig);
-    db          = firebase.database();
-    settingsRef = db.ref('assemblyTracker/settings');
-    logsRef     = db.ref('assemblyTracker/logs');
+    db     = firebase.database();
+    posRef = db.ref('assemblyTracker/pos');
 
-    // ── Listen real-time settings ──
-    settingsRef.on('value', snap => {
-      const data = snap.val();
-      if (data) {
-        localState.po         = data.po         ?? 470;
-        localState.baseOutput = data.baseOutput  ?? 399;
-        localState.baseFG     = data.baseFG      ?? 0;
-      } else {
-        // Inisialisasi default jika database kosong
-        settingsRef.set({ po: 470, baseOutput: 399, baseFG: 0 });
-      }
-      renderAll();
-    }, err => {
-      console.error('Settings error:', err);
-      setSyncStatus('error', '❌ Gagal baca settings: ' + err.message);
-    });
-
-    // ── Listen real-time logs ──
-    logsRef.on('value', snap => {
-      const data = snap.val();
-      localState.logs = [];
-      if (data) {
-        Object.entries(data).forEach(([key, val]) => {
-          localState.logs.push({ ...val, key });
-        });
-        // Urutkan berdasarkan tanggal lalu shift
-        localState.logs.sort((a, b) => {
-          if (a.date !== b.date) return a.date.localeCompare(b.date);
-          return a.shift.localeCompare(b.shift);
-        });
-      }
+    posRef.on('value', snap => {
+      allPos = snap.val() || {};
+      // Normalize logs field
+      Object.keys(allPos).forEach(id => {
+        if (!allPos[id].logs) allPos[id].logs = {};
+      });
       document.getElementById('loadingOverlay').style.display = 'none';
-      setSyncStatus('synced', '🟢 Tersinkron di semua perangkat');
-      renderAll();
+      setSyncStatus('synced', '🟢 Tersinkron');
+      renderDashboard();
+      if (currentPoId && allPos[currentPoId]) renderDetail(currentPoId);
     }, err => {
-      console.error('Logs error:', err);
       document.getElementById('loadingOverlay').style.display = 'none';
-      setSyncStatus('error', '❌ Gagal sinkron: ' + err.message);
+      setSyncStatus('error', '❌ ' + err.message);
     });
-
   } catch(e) {
-    console.error('Firebase init error:', e);
     document.getElementById('loadingOverlay').style.display = 'none';
-    setSyncStatus('error', '❌ Error Firebase: ' + e.message);
+    setSyncStatus('error', '❌ ' + e.message);
     fallbackToLocal();
   }
 }
 
-// ── FALLBACK localStorage jika Firebase belum dikonfigurasi ──
+// ── FALLBACK LOCAL ──
 function fallbackToLocal() {
-  try {
-    const raw = localStorage.getItem('assemblyTracker_local');
-    if (raw) {
-      const saved = JSON.parse(raw);
-      localState.po         = saved.po         ?? 470;
-      localState.baseOutput = saved.baseOutput  ?? 399;
-      localState.baseFG     = saved.baseFG      ?? 0;
-      localState.logs       = saved.logs        ?? [];
-    }
-  } catch(e) {}
+  try { allPos = JSON.parse(localStorage.getItem('asmTracker_pos') || '{}'); } catch(e) { allPos = {}; }
   document.getElementById('loadingOverlay').style.display = 'none';
-  renderAll();
+  setSyncStatus('error', '⚠️ Mode lokal (Firebase belum dikonfigurasi)');
+  renderDashboard();
+}
+function persistLocal() {
+  localStorage.setItem('asmTracker_pos', JSON.stringify(allPos));
 }
 
-function saveLocal() {
-  localStorage.setItem('assemblyTracker_local', JSON.stringify({
-    po: localState.po,
-    baseOutput: localState.baseOutput,
-    baseFG: localState.baseFG,
-    logs: localState.logs
-  }));
-}
-
-// ── SYNC STATUS PILL ──
+// ── SYNC STATUS ──
 function setSyncStatus(type, text) {
   const pill = document.getElementById('syncPill');
   const dot  = pill.querySelector('.sync-dot');
-  const span = document.getElementById('syncText');
   pill.className = 'sync-pill ' + type;
   dot.className  = 'sync-dot' + (type === 'connecting' ? ' pulse' : '');
-  span.textContent = text;
+  document.getElementById('syncText').textContent = text;
 }
 
-// ================================================================
-//  COMPUTED
-// ================================================================
-function computeTotals() {
-  const totalOutputLog = localState.logs.reduce((s, l) => s + (l.output || 0), 0);
-  const totalFGLog     = localState.logs.reduce((s, l) => s + (l.fg     || 0), 0);
-  const totalOutput    = localState.baseOutput + totalOutputLog;
-  const totalFG        = localState.baseFG     + totalFGLog;
-  const kurang         = Math.max(0, localState.po - totalOutput);
-  const belumFG        = Math.max(0, totalOutput - totalFG);
-  const pct            = Math.min(100, Math.round(totalOutput / localState.po * 100));
-  return { totalOutput, totalFG, kurang, belumFG, pct };
+// ── UTILS ──
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function getLogs(po) {
+  if (!po.logs) return [];
+  return Object.entries(po.logs)
+    .map(([k,v]) => ({ ...v, key: k }))
+    .sort((a,b) => a.date !== b.date ? a.date.localeCompare(b.date) : a.createdAt - b.createdAt);
 }
 
-// ================================================================
-//  RENDER
-// ================================================================
-function renderKPI() {
-  const t = computeTotals();
-  document.getElementById('kpiPO').textContent      = localState.po;
-  document.getElementById('kpiDone').textContent    = t.totalOutput;
-  document.getElementById('kpiKurang').textContent  = t.kurang;
-  document.getElementById('kpiFG').textContent      = t.totalFG;
-  document.getElementById('kpiBelumFG').textContent = t.belumFG;
-
-  const pf     = document.getElementById('progressFill');
-  const pctStr = t.pct + '%';
-  pf.style.width = pctStr;
-  pf.dataset.pct = pctStr;
-  document.getElementById('pctLabel').textContent = pctStr;
-
-  const ab  = document.getElementById('alertBox');
-  const msg = document.getElementById('alertMsg');
-  if (t.kurang === 0) {
-    ab.className = 'alert success';
-    msg.textContent = `🎉 PO SELESAI! Semua ${localState.po} unit telah terakit. Kirim seluruh unit ke Finish Goods.`;
-  } else if (t.pct >= 80) {
-    ab.className = 'alert warn';
-    msg.textContent = `⚠️ Hampir selesai! ${t.totalOutput} dari ${localState.po} unit (${t.pct}%). Sisa ${t.kurang} unit.`;
-  } else {
-    ab.className = 'alert info';
-    msg.textContent = `📌 Progress: ${t.totalOutput} dari ${localState.po} unit (${t.pct}%). Kekurangan: ${t.kurang} unit. FG terkirim: ${t.totalFG} unit.`;
-  }
+function computePo(po) {
+  const logs       = getLogs(po);
+  const logOut     = logs.reduce((s,l) => s + (l.output||0), 0);
+  const logFG      = logs.reduce((s,l) => s + (l.fg||0), 0);
+  const totalOut   = (po.baseOutput||0) + logOut;
+  const totalFG    = (po.baseFG||0)     + logFG;
+  const target     = po.target || 0;
+  const kurang     = Math.max(0, target - totalOut);
+  const belumFG    = Math.max(0, totalOut - totalFG);
+  const pct        = target > 0 ? Math.min(100, Math.round(totalOut / target * 100)) : 0;
+  return { totalOut, totalFG, kurang, belumFG, pct, logs };
 }
 
-function addWorkdays(startDate, days) {
-  let d = new Date(startDate);
-  let added = 0;
-  while (added < days) {
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() !== 0) added++;
-  }
+function addWorkdays(days) {
+  let d = new Date(); let added = 0;
+  while (added < days) { d.setDate(d.getDate()+1); if(d.getDay()!==0) added++; }
   return d;
 }
-
-function formatDate(d) {
-  return d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+function fmtDate(d) {
+  return d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function fmtShort(d) {
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
 }
 
-function renderEst() {
-  const t = computeTotals();
-  if (t.kurang <= 0) {
-    document.getElementById('estSlow').textContent     = 'SELESAI ✅';
-    document.getElementById('estSlowDays').textContent = '';
-    document.getElementById('estFast').textContent     = 'SELESAI ✅';
-    document.getElementById('estFastDays').textContent = '';
-    return;
-  }
-  const now      = new Date();
-  const daysSlow = Math.ceil(t.kurang / 15);
-  const daysFast = Math.ceil(t.kurang / 18);
-  document.getElementById('estSlow').textContent     = formatDate(addWorkdays(now, daysSlow));
-  document.getElementById('estSlowDays').textContent = `≈ ${daysSlow} hari kerja lagi (sisa ${t.kurang} ÷ 15/hari)`;
-  document.getElementById('estFast').textContent     = formatDate(addWorkdays(now, daysFast));
-  document.getElementById('estFastDays').textContent = `≈ ${daysFast} hari kerja lagi (sisa ${t.kurang} ÷ 18/hari)`;
+// ================================================================
+//  DASHBOARD
+// ================================================================
+function showDashboard() {
+  currentPoId = null;
+  document.getElementById('pageDashboard').classList.add('active');
+  document.getElementById('pageDetail').classList.remove('active');
+  renderDashboard();
 }
 
-function renderLog() {
-  const tbody = document.getElementById('logBody');
-  if (!localState.logs.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Belum ada data log.</td></tr>`;
-    return;
-  }
-  let cumOut = localState.baseOutput;
-  let cumFG  = localState.baseFG;
-  let html   = '';
-  localState.logs.forEach((log, i) => {
-    cumOut += (log.output || 0);
-    cumFG  += (log.fg     || 0);
-    const sb = log.shift === 'Siang' ? 'badge-orange' : log.shift === 'Malam' ? 'badge-green' : 'badge-blue';
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${log.date}</td>
-        <td><span class="badge ${sb}">${log.shift}</span></td>
-        <td><strong>${log.output}</strong></td>
-        <td>${log.fg}</td>
-        <td>${cumOut}</td>
-        <td>${cumFG}</td>
-        <td style="color:var(--muted)">${log.note || '–'}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="deleteLog('${log.key || i}')">🗑</button>
-        </td>
-      </tr>`;
+function renderDashboard() {
+  const ids = Object.keys(allPos);
+
+  // Summary KPIs
+  let sumOut=0, sumKurang=0, sumFG=0;
+  let activeCnt = 0;
+  ids.forEach(id => {
+    const c = computePo(allPos[id]);
+    sumOut    += c.totalOut;
+    sumKurang += c.kurang;
+    sumFG     += c.totalFG;
+    if (c.kurang > 0) activeCnt++;
   });
-  tbody.innerHTML = html;
-}
+  document.getElementById('sumTotal').textContent  = ids.length;
+  document.getElementById('sumOutput').textContent = sumOut;
+  document.getElementById('sumKurang').textContent = sumKurang;
+  document.getElementById('sumFG').textContent     = sumFG;
 
-function renderAll() {
-  renderKPI();
-  renderEst();
-  renderLog();
-}
-
-// ================================================================
-//  ADD ENTRY
-// ================================================================
-function addEntry() {
-  const dateVal   = document.getElementById('inDate').value;
-  const shift     = document.getElementById('inShift').value;
-  const outputVal = parseInt(document.getElementById('inOutput').value) || 0;
-  const fgVal     = parseInt(document.getElementById('inFG').value)     || 0;
-  const note      = document.getElementById('inNote').value.trim();
-
-  if (!dateVal) { alert('⚠️ Tanggal wajib diisi!'); return; }
-
-  const entry = { date: dateVal, shift, output: outputVal, fg: fgVal, note, createdAt: Date.now() };
-
-  if (isConfigured && logsRef) {
-    setSyncStatus('connecting', 'Menyimpan…');
-    logsRef.push(entry)
-      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
-      .catch(e => {
-        setSyncStatus('error', '❌ Gagal simpan: ' + e.message);
-        alert('Gagal menyimpan: ' + e.message);
-      });
-  } else {
-    // Fallback local
-    localState.logs.push({ ...entry, key: Date.now().toString() });
-    localState.logs.sort((a,b) => a.date.localeCompare(b.date));
-    saveLocal();
-    renderAll();
+  // PO Cards
+  const grid = document.getElementById('poGrid');
+  if (ids.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="icon">📋</div>
+        <p>Belum ada PO. Klik <strong>"＋ Tambah PO Baru"</strong> untuk memulai.</p>
+      </div>`;
+    return;
   }
 
-  // Reset form
-  document.getElementById('inOutput').value = '';
-  document.getElementById('inFG').value     = '';
-  document.getElementById('inNote').value   = '';
+  grid.innerHTML = ids.map(id => {
+    const po = allPos[id];
+    const c  = computePo(po);
+    const daysSlow = c.kurang > 0 ? Math.ceil(c.kurang / 15) : 0;
+    const estLabel = c.kurang === 0
+      ? '<span style="color:#057a55;font-weight:700;">✅ Selesai!</span>'
+      : `Est. selesai ~${daysSlow} hari kerja`;
+
+    let statusCls = 'active', statusTxt = 'AKTIF';
+    if (c.kurang === 0) { statusCls = 'done';     statusTxt = 'SELESAI'; }
+    else if (c.pct < 30) { statusCls = 'critical'; statusTxt = 'AWAL'; }
+
+    return `
+    <div class="po-card" onclick="showDetail('${id}')">
+      <div class="po-card-top">
+        <div class="po-card-head">
+          <div>
+            <div class="po-name">${po.name}</div>
+            <div class="po-product">${po.product || '–'}</div>
+          </div>
+          <div class="po-status-badge ${statusCls}">${statusTxt}</div>
+        </div>
+        <div class="po-stats">
+          <div class="po-stat green"><label>Selesai</label><div class="n">${c.totalOut}</div></div>
+          <div class="po-stat red">  <label>Kurang</label> <div class="n">${c.kurang}</div></div>
+          <div class="po-stat purple"><label>FG</label>    <div class="n">${c.totalFG}</div></div>
+          <div class="po-stat">      <label>Target</label> <div class="n" style="color:var(--muted)">${po.target}</div></div>
+        </div>
+      </div>
+      <div class="po-card-bar">
+        <div class="po-card-bar-fill" style="width:${c.pct}%"></div>
+      </div>
+      <div class="po-card-bottom">
+        <div class="po-pct">${c.pct}% tercapai</div>
+        <div class="po-est">${estLabel}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ================================================================
+//  ADD / EDIT PO MODAL
+// ================================================================
+let editingPoId = null;
+
+function openAddPoModal() {
+  editingPoId = null;
+  document.getElementById('modalPoTitle').textContent = '➕ Tambah PO Baru';
+  document.getElementById('modalPoSaveBtn').textContent = 'Simpan PO';
+  document.getElementById('mpName').value    = '';
+  document.getElementById('mpProduct').value = '';
+  document.getElementById('mpTarget').value  = '';
+  document.getElementById('mpBase').value    = '';
+  document.getElementById('mpFGBase').value  = '';
+  document.getElementById('mpStart').value   = new Date().toISOString().slice(0,10);
+  document.getElementById('modalPo').classList.add('open');
+}
+
+function openEditPoModal() {
+  if (!currentPoId) return;
+  const po = allPos[currentPoId];
+  editingPoId = currentPoId;
+  document.getElementById('modalPoTitle').textContent = '✏️ Edit PO';
+  document.getElementById('modalPoSaveBtn').textContent = 'Update PO';
+  document.getElementById('mpName').value    = po.name    || '';
+  document.getElementById('mpProduct').value = po.product || '';
+  document.getElementById('mpTarget').value  = po.target  || '';
+  document.getElementById('mpBase').value    = po.baseOutput || 0;
+  document.getElementById('mpFGBase').value  = po.baseFG    || 0;
+  document.getElementById('mpStart').value   = po.startDate || '';
+  document.getElementById('modalPo').classList.add('open');
+}
+
+function closeModalPo() { document.getElementById('modalPo').classList.remove('open'); }
+
+function savePo() {
+  const name    = document.getElementById('mpName').value.trim();
+  const product = document.getElementById('mpProduct').value.trim();
+  const target  = parseInt(document.getElementById('mpTarget').value) || 0;
+  const base    = parseInt(document.getElementById('mpBase').value)   || 0;
+  const fgBase  = parseInt(document.getElementById('mpFGBase').value) || 0;
+  const start   = document.getElementById('mpStart').value;
+
+  if (!name)   { alert('⚠️ Nama/Nomor PO wajib diisi!'); return; }
+  if (!target) { alert('⚠️ Target PO wajib diisi!'); return; }
+
+  const poId = editingPoId || genId();
+
+  const poData = {
+    name, product, target,
+    baseOutput: base,
+    baseFG: fgBase,
+    startDate: start,
+    updatedAt: Date.now(),
+    logs: (editingPoId && allPos[editingPoId] && allPos[editingPoId].logs) || {}
+  };
+  if (!editingPoId) poData.createdAt = Date.now();
+
+  if (isConfigured && posRef) {
+    setSyncStatus('connecting', 'Menyimpan…');
+    posRef.child(poId).set(poData);
+  } else {
+    allPos[poId] = poData;
+    persistLocal();
+    renderDashboard();
+  }
+
+  closeModalPo();
+  if (editingPoId) renderDetail(currentPoId);
+}
+
+// ================================================================
+//  DELETE PO
+// ================================================================
+function confirmDeletePo() {
+  if (!currentPoId) return;
+  const po = allPos[currentPoId];
+  document.getElementById('confirmMsg').textContent =
+    `PO "${po.name}" dan semua log-nya (${getLogs(po).length} entri) akan dihapus permanen.`;
+  document.getElementById('confirmOkBtn').onclick = deletePo;
+  document.getElementById('modalConfirm').classList.add('open');
+}
+function closeModalConfirm() { document.getElementById('modalConfirm').classList.remove('open'); }
+function deletePo() {
+  if (!currentPoId) return;
+  if (isConfigured && posRef) {
+    setSyncStatus('connecting', 'Menghapus…');
+    posRef.child(currentPoId).remove();
+  } else {
+    delete allPos[currentPoId];
+    persistLocal();
+  }
+  closeModalConfirm();
+  showDashboard();
+}
+
+// ================================================================
+//  DETAIL PAGE
+// ================================================================
+function showDetail(poId) {
+  currentPoId = poId;
+  document.getElementById('pageDashboard').classList.remove('active');
+  document.getElementById('pageDetail').classList.add('active');
+  document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+  renderDetail(poId);
+  window.scrollTo(0,0);
+}
+
+function renderDetail(poId) {
+  const po = allPos[poId];
+  if (!po) return;
+  const c = computePo(po);
+
+  document.getElementById('detailPoName').textContent = po.name;
+  document.getElementById('detailPoMeta').textContent =
+    (po.product ? po.product + ' · ' : '') +
+    'Target: ' + po.target + ' unit' +
+    (po.startDate ? ' · Mulai: ' + fmtShort(new Date(po.startDate)) : '');
+
+  // KPI
+  document.getElementById('dKpiPO').textContent    = po.target;
+  document.getElementById('dKpiDone').textContent  = c.totalOut;
+  document.getElementById('dKpiLeft').textContent  = c.kurang;
+  document.getElementById('dKpiFG').textContent    = c.totalFG;
+  document.getElementById('dKpiBelum').textContent = c.belumFG;
+
+  // Progress
+  const pctStr = c.pct + '%';
+  const pf = document.getElementById('dProgFill');
+  pf.style.width = pctStr; pf.dataset.pct = pctStr;
+  document.getElementById('dPct').textContent = pctStr;
+
+  // Alert
+  const ab  = document.getElementById('detailAlert');
+  const msg = document.getElementById('detailAlertMsg');
+  if (c.kurang === 0) {
+    ab.className = 'alert success';
+    msg.textContent = `🎉 PO ${po.name} SELESAI! Semua ${po.target} unit terakit. Segera kirim ke Finish Goods.`;
+  } else if (c.pct >= 80) {
+    ab.className = 'alert warn';
+    msg.textContent = `⚠️ Hampir selesai! ${c.totalOut}/${po.target} unit (${c.pct}%). Sisa ${c.kurang} unit.`;
+  } else {
+    ab.className = 'alert info';
+    msg.textContent = `📌 Progress ${c.totalOut} dari ${po.target} unit (${c.pct}%). Kekurangan: ${c.kurang} unit. FG terkirim: ${c.totalFG}.`;
+  }
+
+  // Estimasi
+  if (c.kurang <= 0) {
+    document.getElementById('dEstSlow').textContent     = 'SELESAI ✅';
+    document.getElementById('dEstSlowDays').textContent = '';
+    document.getElementById('dEstFast').textContent     = 'SELESAI ✅';
+    document.getElementById('dEstFastDays').textContent = '';
+  } else {
+    const ds = Math.ceil(c.kurang/15), df = Math.ceil(c.kurang/18);
+    document.getElementById('dEstSlow').textContent     = fmtDate(addWorkdays(ds));
+    document.getElementById('dEstSlowDays').textContent = `≈ ${ds} hari kerja (${c.kurang} ÷ 15/hari)`;
+    document.getElementById('dEstFast').textContent     = fmtDate(addWorkdays(df));
+    document.getElementById('dEstFastDays').textContent = `≈ ${df} hari kerja (${c.kurang} ÷ 18/hari)`;
+  }
+
+  // Log table
+  renderLogTable(po, c);
+}
+
+function renderLogTable(po, c) {
+  const tbody = document.getElementById('logBody');
+  const logs  = c.logs;
+  if (!logs.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--muted);">Belum ada log. Tambah output harian di atas.</td></tr>`;
+    return;
+  }
+  let cumOut = po.baseOutput || 0;
+  let cumFG  = po.baseFG     || 0;
+  tbody.innerHTML = logs.map((log, i) => {
+    cumOut += (log.output||0);
+    cumFG  += (log.fg||0);
+    const sb = log.shift==='Siang' ? 'badge-orange' : log.shift==='Malam' ? 'badge-green' : log.shift==='Full' ? 'badge-slate' : 'badge-blue';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${log.date}</td>
+      <td><span class="badge ${sb}">${log.shift}</span></td>
+      <td><strong>${log.output}</strong></td>
+      <td>${log.fg}</td>
+      <td>${cumOut}</td>
+      <td>${cumFG}</td>
+      <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${log.note||'–'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="openConfirmLog('${log.key}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ================================================================
+//  ADD LOG
+// ================================================================
+function addLog() {
+  if (!currentPoId) return;
+  const date   = document.getElementById('logDate').value;
+  const shift  = document.getElementById('logShift').value;
+  const output = parseInt(document.getElementById('logOutput').value) || 0;
+  const fg     = parseInt(document.getElementById('logFG').value)     || 0;
+  const note   = document.getElementById('logNote').value.trim();
+
+  if (!date) { alert('⚠️ Tanggal wajib diisi!'); return; }
+
+  const entry = { date, shift, output, fg, note, createdAt: Date.now() };
+
+  if (isConfigured && posRef) {
+    setSyncStatus('connecting', 'Menyimpan…');
+    posRef.child(currentPoId + '/logs').push(entry);
+  } else {
+    const key = genId();
+    if (!allPos[currentPoId].logs) allPos[currentPoId].logs = {};
+    allPos[currentPoId].logs[key] = entry;
+    persistLocal();
+    renderDetail(currentPoId);
+  }
+
+  document.getElementById('logOutput').value = '';
+  document.getElementById('logFG').value     = '';
+  document.getElementById('logNote').value   = '';
 }
 
 // ================================================================
 //  DELETE LOG
 // ================================================================
-function deleteLog(keyOrIdx) {
-  if (!confirm('Hapus entri ini?')) return;
-
-  if (isConfigured && logsRef) {
+let pendingDeleteLogKey = null;
+function openConfirmLog(key) {
+  pendingDeleteLogKey = key;
+  document.getElementById('modalConfirmLog').classList.add('open');
+  document.getElementById('confirmLogOkBtn').onclick = doDeleteLog;
+}
+function closeModalConfirmLog() {
+  document.getElementById('modalConfirmLog').classList.remove('open');
+  pendingDeleteLogKey = null;
+}
+function doDeleteLog() {
+  if (!currentPoId || !pendingDeleteLogKey) return;
+  if (isConfigured && posRef) {
     setSyncStatus('connecting', 'Menghapus…');
-    logsRef.child(keyOrIdx).remove()
-      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
-      .catch(e => setSyncStatus('error', '❌ Gagal hapus: ' + e.message));
+    posRef.child(currentPoId + '/logs/' + pendingDeleteLogKey).remove();
   } else {
-    const idx = localState.logs.findIndex(l => l.key === keyOrIdx || String(l.key) === String(keyOrIdx));
-    if (idx > -1) localState.logs.splice(idx, 1);
-    saveLocal();
-    renderAll();
+    delete allPos[currentPoId].logs[pendingDeleteLogKey];
+    persistLocal();
+    renderDetail(currentPoId);
   }
-}
-
-// ================================================================
-//  PO SETTINGS MODAL
-// ================================================================
-function openPoModal() {
-  document.getElementById('moPO').value     = localState.po;
-  document.getElementById('moBase').value   = localState.baseOutput;
-  document.getElementById('moFGBase').value = localState.baseFG;
-  document.getElementById('poModal').classList.add('open');
-}
-function closePoModal() {
-  document.getElementById('poModal').classList.remove('open');
-}
-function savePoSettings() {
-  const newPO  = parseInt(document.getElementById('moPO').value)     || 470;
-  const newBase= parseInt(document.getElementById('moBase').value)    || 0;
-  const newFGB = parseInt(document.getElementById('moFGBase').value)  || 0;
-
-  if (isConfigured && settingsRef) {
-    setSyncStatus('connecting', 'Menyimpan settings…');
-    settingsRef.set({ po: newPO, baseOutput: newBase, baseFG: newFGB })
-      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
-      .catch(e => setSyncStatus('error', '❌ Gagal simpan: ' + e.message));
-  } else {
-    localState.po         = newPO;
-    localState.baseOutput = newBase;
-    localState.baseFG     = newFGB;
-    saveLocal();
-    renderAll();
-  }
-  closePoModal();
+  closeModalConfirmLog();
 }
 
 // ================================================================
@@ -747,18 +931,13 @@ function savePoSettings() {
 // ================================================================
 function tickClock() {
   document.getElementById('clock').textContent =
-    new Date().toLocaleString('id-ID', {
-      weekday:'short', day:'2-digit', month:'short', year:'numeric',
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    });
+    new Date().toLocaleString('id-ID', { weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
+tickClock(); setInterval(tickClock, 10000);
 
 // ================================================================
 //  BOOT
 // ================================================================
-document.getElementById('inDate').value = new Date().toISOString().slice(0,10);
-tickClock();
-setInterval(tickClock, 1000);
 initFirebase();
 </script>
 </body>
