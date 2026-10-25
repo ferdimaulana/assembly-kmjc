@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assembly Tracker – Kanindo Makmur Jaya 2 Gedung C</title>
+
+  <!-- =====================================================
+       FIREBASE COMPAT SDK (v10)
+       Ganti firebaseConfig di bawah dengan config Anda!
+  ====================================================== -->
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,8 +21,6 @@
       --success:   #057a55;
       --danger:    #c81e1e;
       --warning:   #92400e;
-      --warn-bg:   #fffbeb;
-      --warn-bd:   #f59e0b;
       --bg:        #f3f4f6;
       --card:      #ffffff;
       --text:      #111827;
@@ -22,18 +28,12 @@
       --border:    #e5e7eb;
       --radius:    12px;
     }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* ===== HEADER ===== */
+    /* HEADER */
     header {
       background: linear-gradient(135deg, #1e40af 0%, #1a56db 60%, #2563eb 100%);
-      color: #fff;
-      padding: 20px 24px 18px;
+      color: #fff; padding: 20px 24px 18px;
       box-shadow: 0 4px 12px rgba(30,64,175,.35);
     }
     header .brand { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
@@ -41,235 +41,195 @@
     header .subtitle { font-size: 13px; opacity: .8; margin-top: 2px; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
     .datetime-badge {
-      background: rgba(255,255,255,.15);
-      border: 1px solid rgba(255,255,255,.25);
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 13px;
-      text-align: right;
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px; padding: 6px 14px; font-size: 13px; text-align: right;
     }
     .datetime-badge span { display: block; font-size: 11px; opacity: .75; }
 
-    /* ===== LAYOUT ===== */
-    main { max-width: 960px; margin: 24px auto; padding: 0 16px 40px; }
+    /* SYNC STATUS */
+    .sync-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 11px; font-weight: 700; letter-spacing: .5px;
+      margin-top: 8px; transition: all .3s;
+    }
+    .sync-pill.connecting { background: rgba(255,255,255,.15); color: rgba(255,255,255,.8); }
+    .sync-pill.synced     { background: rgba(16,185,129,.25);  color: #6ee7b7; }
+    .sync-pill.error      { background: rgba(239,68,68,.25);   color: #fca5a5; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .sync-dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-    /* ===== SECTION TITLE ===== */
+    /* SETUP BANNER */
+    .setup-banner {
+      background: #fffbeb; border: 2px dashed #f59e0b;
+      border-radius: 12px; padding: 20px 22px; margin-bottom: 20px;
+    }
+    .setup-banner h3 { color: #92400e; font-size: 15px; margin-bottom: 8px; }
+    .setup-banner p  { font-size: 13px; color: #78350f; line-height: 1.6; }
+    .setup-banner code { background: #fef3c7; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+    /* LAYOUT */
+    main { max-width: 980px; margin: 24px auto; padding: 0 16px 40px; }
     .section-title {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 28px 0 12px;
+      font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin: 28px 0 12px;
     }
 
-    /* ===== CARD ===== */
+    /* CARD */
     .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      padding: 20px 22px;
-      margin-bottom: 16px;
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      padding: 20px 22px; margin-bottom: 16px;
     }
 
-    /* ===== KPI GRID ===== */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 14px;
-      margin-bottom: 16px;
-    }
+    /* KPI GRID */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
     .kpi {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 18px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; position: relative; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06);
     }
-    .kpi::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-    .kpi.blue::before   { background: #3b82f6; }
-    .kpi.green::before  { background: #10b981; }
-    .kpi.red::before    { background: #ef4444; }
-    .kpi.orange::before { background: #f59e0b; }
-    .kpi.purple::before { background: #8b5cf6; }
-    .kpi label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
-    .kpi .val  { font-size: 32px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
-    .kpi .sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .kpi.blue   .val { color: #1a56db; }
-    .kpi.green  .val { color: #057a55; }
-    .kpi.red    .val { color: #c81e1e; }
-    .kpi.orange .val { color: #92400e; }
-    .kpi.purple .val { color: #6d28d9; }
+    .kpi::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; border-radius: var(--radius) var(--radius) 0 0; }
+    .kpi.blue::before   { background:#3b82f6; }
+    .kpi.green::before  { background:#10b981; }
+    .kpi.red::before    { background:#ef4444; }
+    .kpi.orange::before { background:#f59e0b; }
+    .kpi.purple::before { background:#8b5cf6; }
+    .kpi label { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); }
+    .kpi .val  { font-size:32px; font-weight:800; line-height:1.1; margin-top:4px; }
+    .kpi .sub  { font-size:12px; color:var(--muted); margin-top:2px; }
+    .kpi.blue   .val { color:#1a56db; }
+    .kpi.green  .val { color:#057a55; }
+    .kpi.red    .val { color:#c81e1e; }
+    .kpi.orange .val { color:#92400e; }
+    .kpi.purple .val { color:#6d28d9; }
 
-    /* ===== PROGRESS BAR ===== */
+    /* PROGRESS */
     .progress-wrap { margin: 14px 0 6px; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-    .progress-label strong { font-weight: 700; }
-    .progress-bg {
-      background: #e5e7eb;
-      border-radius: 100px;
-      height: 18px;
-      overflow: hidden;
-    }
+    .progress-label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+    .progress-bg { background:#e5e7eb; border-radius:100px; height:18px; overflow:hidden; }
     .progress-fill {
-      height: 100%;
-      border-radius: 100px;
+      height:100%; border-radius:100px;
       background: linear-gradient(90deg, #1a56db, #10b981);
-      transition: width .6s ease;
-      position: relative;
+      transition: width .6s ease; position:relative;
     }
     .progress-fill::after {
-      content: attr(data-pct);
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
+      content: attr(data-pct); position:absolute; right:8px; top:50%;
+      transform:translateY(-50%); font-size:11px; font-weight:700; color:#fff;
     }
 
-    /* ===== FORM ===== */
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    /* FORM */
+    .form-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:14px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
     .form-group input, .form-group select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color .2s;
+      width:100%; padding:10px 12px; border:1.5px solid var(--border);
+      border-radius:8px; font-size:14px; outline:none; transition:border-color .2s;
     }
-    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
-    .form-group small { font-size: 11px; color: var(--muted); margin-top: 4px; display: block; }
+    .form-group input:focus, .form-group select:focus { border-color:var(--primary); }
+    .form-group small { font-size:11px; color:var(--muted); margin-top:4px; display:block; }
 
-    /* ===== BUTTON ===== */
+    /* BUTTON */
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 20px;
-      border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: all .15s;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:10px 20px; border:none; border-radius:8px;
+      font-size:14px; font-weight:600; cursor:pointer; transition:all .15s;
     }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(26,86,219,.35); }
-    .btn-danger  { background: #fee2e2; color: var(--danger); }
-    .btn-danger:hover  { background: #fecaca; }
-    .btn-success { background: #d1fae5; color: var(--success); }
-    .btn-success:hover { background: #a7f3d0; }
-    .btn-sm { padding: 5px 12px; font-size: 12px; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-d); transform:translateY(-1px); box-shadow:0 4px 10px rgba(26,86,219,.35); }
+    .btn-danger  { background:#fee2e2; color:var(--danger); }
+    .btn-danger:hover  { background:#fecaca; }
+    .btn-success { background:#d1fae5; color:var(--success); }
+    .btn-success:hover { background:#a7f3d0; }
+    .btn-sm { padding:5px 12px; font-size:12px; }
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 
-    /* ===== ESTIMATION CARD ===== */
-    .est-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .est-item { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); }
-    .est-item.slow  { background: #fffbeb; border-color: #f59e0b; }
-    .est-item.fast  { background: #f0fdf4; border-color: #10b981; }
-    .est-item label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
-    .est-item .date { font-size: 20px; font-weight: 800; margin-top: 4px; }
-    .est-item.slow .date { color: #92400e; }
-    .est-item.fast .date { color: #057a55; }
-    .est-item .days { font-size: 12px; color: var(--muted); }
+    /* ESTIMASI */
+    .est-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .est-item { padding:14px 16px; border-radius:10px; border:1px solid var(--border); }
+    .est-item.slow { background:#fffbeb; border-color:#f59e0b; }
+    .est-item.fast { background:#f0fdf4; border-color:#10b981; }
+    .est-item label { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); }
+    .est-item .date { font-size:18px; font-weight:800; margin-top:4px; }
+    .est-item.slow .date { color:#92400e; }
+    .est-item.fast .date { color:#057a55; }
+    .est-item .days { font-size:12px; color:var(--muted); }
 
-    /* ===== LOG TABLE ===== */
-    .table-wrap { overflow-x: auto; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    /* TABLE */
+    .table-wrap { overflow-x:auto; margin-top:4px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
     thead th {
-      background: #f9fafb;
-      border-bottom: 2px solid var(--border);
-      padding: 10px 12px;
-      text-align: left;
-      font-weight: 700;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      color: var(--muted);
+      background:#f9fafb; border-bottom:2px solid var(--border);
+      padding:10px 12px; text-align:left; font-weight:700;
+      font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);
     }
-    tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f9fafb; }
-    tbody td { padding: 10px 12px; }
-    .badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-blue   { background: #dbeafe; color: #1e40af; }
-    .badge-green  { background: #d1fae5; color: #065f46; }
-    .badge-orange { background: #fef3c7; color: #92400e; }
+    tbody tr { border-bottom:1px solid var(--border); transition:background .12s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:#f9fafb; }
+    tbody td { padding:10px 12px; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:11px; font-weight:700; }
+    .badge-blue   { background:#dbeafe; color:#1e40af; }
+    .badge-green  { background:#d1fae5; color:#065f46; }
+    .badge-orange { background:#fef3c7; color:#92400e; }
 
-    /* ===== ALERT / NOTICE ===== */
+    /* ALERT */
     .alert {
-      border-radius: 10px;
-      padding: 14px 16px;
-      border: 1px solid;
-      font-size: 13px;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      border-radius:10px; padding:14px 16px; border:1px solid;
+      font-size:13px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;
     }
-    .alert.info    { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
-    .alert.success { background: #f0fdf4; border-color: #6ee7b7; color: #065f46; }
-    .alert.warn    { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
-    .alert .icon   { font-size: 18px; flex-shrink: 0; margin-top: -1px; }
+    .alert.info    { background:#eff6ff; border-color:#93c5fd; color:#1e40af; }
+    .alert.success { background:#f0fdf4; border-color:#6ee7b7; color:#065f46; }
+    .alert.warn    { background:#fffbeb; border-color:#fcd34d; color:#92400e; }
+    .alert.danger  { background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+    .alert .icon   { font-size:18px; flex-shrink:0; margin-top:-1px; }
 
-    /* ===== KIRIM TO FINISH GOODS ===== */
-    .fg-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .fg-total { font-size: 22px; font-weight: 800; color: var(--success); }
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff; border-radius:var(--radius); padding:28px 28px 22px; width:min(440px,92vw); box-shadow:0 20px 60px rgba(0,0,0,.25); }
+    .modal h3 { font-size:17px; font-weight:700; margin-bottom:16px; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
 
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 600px) {
-      .est-grid { grid-template-columns: 1fr; }
-      .kpi .val  { font-size: 26px; }
+    /* LOADING OVERLAY */
+    #loadingOverlay {
+      position:fixed; inset:0; background:rgba(255,255,255,.92);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:200; gap:16px;
     }
-
-    /* ===== MODAL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 100;
-      align-items: center; justify-content: center;
+    #loadingOverlay .spinner {
+      width:44px; height:44px; border:4px solid #e5e7eb;
+      border-top-color:#1a56db; border-radius:50%;
+      animation: spin .8s linear infinite;
     }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: #fff;
-      border-radius: var(--radius);
-      padding: 28px 28px 22px;
-      width: min(420px, 92vw);
-      box-shadow: 0 20px 60px rgba(0,0,0,.25);
-    }
-    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingOverlay p { font-size:14px; color:var(--muted); }
 
-    /* scrollbar slim */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    @media(max-width:600px) {
+      .est-grid { grid-template-columns:1fr; }
+      .kpi .val  { font-size:26px; }
+    }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:4px; }
   </style>
 </head>
 <body>
 
-<!-- ===== HEADER ===== -->
+<!-- LOADING -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Menghubungkan ke database…</p>
+</div>
+
+<!-- HEADER -->
 <header>
   <div class="header-row">
     <div>
       <div class="brand">📦 Assembly Tracker</div>
       <h1>Kanindo Makmur Jaya 2 – Gedung C</h1>
       <div class="subtitle">Supervisor Assembly · Monitoring Output &amp; Pengiriman ke Finish Goods</div>
+      <div class="sync-pill connecting" id="syncPill">
+        <span class="sync-dot pulse"></span>
+        <span id="syncText">Menghubungkan…</span>
+      </div>
     </div>
     <div class="datetime-badge">
       <span>Tanggal &amp; Waktu</span>
@@ -280,13 +240,22 @@
 
 <main>
 
-  <!-- ===== ALERT STATUS ===== -->
+  <!-- SETUP BANNER (disembunyikan setelah Firebase dikonfigurasi) -->
+  <div class="setup-banner" id="setupBanner" style="display:none">
+    <h3>⚙️ Konfigurasi Firebase Diperlukan</h3>
+    <p>
+      Isi <code>firebaseConfig</code> di bagian script dengan data dari Firebase Console Anda.<br/>
+      Lihat panduan di file <strong>PANDUAN_SETUP.md</strong> yang ada di folder yang sama.
+    </p>
+  </div>
+
+  <!-- ALERT STATUS -->
   <div id="alertBox" class="alert info" style="margin-top:4px;">
     <span class="icon">ℹ️</span>
     <span id="alertMsg">Memuat status produksi…</span>
   </div>
 
-  <!-- ===== KPI ===== -->
+  <!-- KPI -->
   <div class="section-title">📊 Ringkasan PO Saat Ini</div>
   <div class="kpi-grid">
     <div class="kpi blue">
@@ -316,7 +285,6 @@
     </div>
   </div>
 
-  <!-- PROGRESS -->
   <div class="card" style="margin-bottom:0">
     <div class="progress-wrap">
       <div class="progress-label">
@@ -329,7 +297,7 @@
     </div>
   </div>
 
-  <!-- ===== ESTIMASI SELESAI ===== -->
+  <!-- ESTIMASI -->
   <div class="section-title">🗓️ Estimasi Penyelesaian</div>
   <div class="card">
     <div class="est-grid">
@@ -349,7 +317,7 @@
     </div>
   </div>
 
-  <!-- ===== INPUT FORM ===== -->
+  <!-- INPUT FORM -->
   <div class="section-title">➕ Input Output Harian</div>
   <div class="card">
     <div class="form-row">
@@ -387,7 +355,7 @@
     </div>
   </div>
 
-  <!-- ===== LOG HARIAN ===== -->
+  <!-- LOG TABLE -->
   <div class="section-title">📋 Log Output Harian</div>
   <div class="card" style="padding:0">
     <div class="table-wrap">
@@ -407,7 +375,7 @@
         </thead>
         <tbody id="logBody">
           <tr>
-            <td colspan="9" style="text-align:center; color:var(--muted); padding:24px;">Belum ada data log.</td>
+            <td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Memuat data…</td>
           </tr>
         </tbody>
       </table>
@@ -416,7 +384,7 @@
 
 </main>
 
-<!-- ===== MODAL UBAH PO ===== -->
+<!-- MODAL UBAH PO -->
 <div class="modal-overlay" id="poModal">
   <div class="modal">
     <h3>🔧 Ubah Target PO</h3>
@@ -428,10 +396,10 @@
       <div class="form-group">
         <label for="moBase">Output Awal (sudah ada sebelum log)</label>
         <input type="number" id="moBase" min="0" />
-        <small>Contoh: output 399 sebelum tracking ini dimulai</small>
+        <small>Contoh: 399 unit sudah selesai sebelum tracking dimulai</small>
       </div>
       <div class="form-group">
-        <label for="moFGBase">FG Terkirim Awal (sudah ada sebelum log)</label>
+        <label for="moFGBase">FG Terkirim Awal</label>
         <input type="number" id="moFGBase" min="0" />
       </div>
     </div>
@@ -443,258 +411,355 @@
 </div>
 
 <script>
-  // ============================================================
-  // STATE
-  // ============================================================
-  let state = loadState();
+// ================================================================
+//  ⚠️  KONFIGURASI FIREBASE — GANTI DENGAN CONFIG ANDA!
+//  Lihat PANDUAN_SETUP.md untuk langkah-langkah mendapatkan config ini.
+// ================================================================
+const firebaseConfig = {
+  apiKey:            "AIzaSyDwad67lipZZm6eVT0CuwlNqVIc6hVKrhc",
+  authDomain:        "assemblykmjc.firebaseapp.com",
+  databaseURL:       "https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "assemblykmjc",
+  storageBucket:     "assemblykmjc.firebasestorage.app",
+  messagingSenderId: "340910060681",
+  appId:             "1:340910060681:web:5343595a0ffbe9945dc258"
+};
+// ================================================================
 
-  function defaultState() {
-    return {
-      po: 470,
-      baseOutput: 399,   // output sebelum tracking log dimulai
-      baseFG: 0,         // FG terkirim sebelum tracking dimulai
-      logs: []
-    };
+// ── Cek apakah sudah dikonfigurasi ──
+const isConfigured = !firebaseConfig.apiKey.includes("GANTI");
+
+let db = null;
+let settingsRef = null;
+let logsRef     = null;
+
+// Cache data lokal (diperbarui oleh Firebase listener)
+let localState = {
+  po: 470,
+  baseOutput: 399,
+  baseFG: 0,
+  logs: []          // array diurutkan, tiap item punya .key (Firebase key)
+};
+
+// ── INIT FIREBASE ──
+function initFirebase() {
+  if (!isConfigured) {
+    document.getElementById('setupBanner').style.display = 'block';
+    document.getElementById('loadingOverlay').style.display = 'none';
+    setSyncStatus('error', '⚠️ Firebase belum dikonfigurasi');
+    // Fallback ke localStorage agar tetap bisa jalan lokal
+    fallbackToLocal();
+    return;
   }
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem('assemblyTracker_v2');
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return defaultState();
-  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db          = firebase.database();
+    settingsRef = db.ref('assemblyTracker/settings');
+    logsRef     = db.ref('assemblyTracker/logs');
 
-  function saveState() {
-    localStorage.setItem('assemblyTracker_v2', JSON.stringify(state));
-  }
-
-  // ============================================================
-  // COMPUTED
-  // ============================================================
-  function computeTotals() {
-    let totalOutputLog = state.logs.reduce((s, l) => s + l.output, 0);
-    let totalFGLog     = state.logs.reduce((s, l) => s + l.fg, 0);
-    let totalOutput    = state.baseOutput + totalOutputLog;
-    let totalFG        = state.baseFG + totalFGLog;
-    let kurang         = Math.max(0, state.po - totalOutput);
-    let belumFG        = Math.max(0, totalOutput - totalFG);
-    let pct            = Math.min(100, Math.round(totalOutput / state.po * 100));
-    return { totalOutput, totalFG, kurang, belumFG, pct };
-  }
-
-  // ============================================================
-  // RENDER KPI
-  // ============================================================
-  function renderKPI() {
-    const t = computeTotals();
-    document.getElementById('kpiPO').textContent      = state.po;
-    document.getElementById('kpiDone').textContent    = t.totalOutput;
-    document.getElementById('kpiKurang').textContent  = t.kurang;
-    document.getElementById('kpiFG').textContent      = t.totalFG;
-    document.getElementById('kpiBelumFG').textContent = t.belumFG;
-
-    const pf = document.getElementById('progressFill');
-    const pctStr = t.pct + '%';
-    pf.style.width   = pctStr;
-    pf.dataset.pct   = pctStr;
-    document.getElementById('pctLabel').textContent = pctStr;
-
-    // alert box
-    const ab  = document.getElementById('alertBox');
-    const msg = document.getElementById('alertMsg');
-    if (t.kurang === 0) {
-      ab.className = 'alert success';
-      msg.textContent = `🎉 PO SELESAI! Semua ${state.po} unit telah terakit. Kirim seluruh unit ke Finish Goods.`;
-    } else if (t.pct >= 80) {
-      ab.className = 'alert warn';
-      msg.textContent = `⚠️ Hampir selesai! Sudah ${t.totalOutput} dari ${state.po} unit (${t.pct}%). Sisa ${t.kurang} unit lagi.`;
-    } else {
-      ab.className = 'alert info';
-      msg.textContent = `📌 Progress: ${t.totalOutput} dari ${state.po} unit (${t.pct}%). Kekurangan: ${t.kurang} unit. FG terkirim: ${t.totalFG} unit.`;
-    }
-  }
-
-  // ============================================================
-  // RENDER ESTIMASI
-  // ============================================================
-  function addWorkdays(startDate, days) {
-    let d = new Date(startDate);
-    let added = 0;
-    while (added < days) {
-      d.setDate(d.getDate() + 1);
-      if (d.getDay() !== 0) added++; // skip Minggu
-    }
-    return d;
-  }
-
-  function formatDate(d) {
-    return d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  }
-
-  function renderEst() {
-    const t = computeTotals();
-    const now = new Date();
-
-    if (t.kurang <= 0) {
-      document.getElementById('estSlow').textContent     = 'SELESAI ✅';
-      document.getElementById('estSlowDays').textContent = '';
-      document.getElementById('estFast').textContent     = 'SELESAI ✅';
-      document.getElementById('estFastDays').textContent = '';
-      return;
-    }
-
-    const daysSlow = Math.ceil(t.kurang / 15);
-    const daysFast = Math.ceil(t.kurang / 18);
-    const dateSlow = addWorkdays(now, daysSlow);
-    const dateFast = addWorkdays(now, daysFast);
-
-    document.getElementById('estSlow').textContent     = formatDate(dateSlow);
-    document.getElementById('estSlowDays').textContent = `≈ ${daysSlow} hari kerja lagi (sisa ${t.kurang} unit ÷ 15/hari)`;
-    document.getElementById('estFast').textContent     = formatDate(dateFast);
-    document.getElementById('estFastDays').textContent = `≈ ${daysFast} hari kerja lagi (sisa ${t.kurang} unit ÷ 18/hari)`;
-  }
-
-  // ============================================================
-  // RENDER LOG TABLE
-  // ============================================================
-  function renderLog() {
-    const tbody = document.getElementById('logBody');
-    if (state.logs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Belum ada data log.</td></tr>`;
-      return;
-    }
-
-    let cumOut = state.baseOutput;
-    let cumFG  = state.baseFG;
-    let html   = '';
-
-    state.logs.forEach((log, i) => {
-      cumOut += log.output;
-      cumFG  += log.fg;
-      const shiftBadge = log.shift === 'Full'   ? 'badge-blue'
-                       : log.shift === 'Pagi'   ? 'badge-blue'
-                       : log.shift === 'Siang'  ? 'badge-orange'
-                       :                          'badge-green';
-      html += `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${log.date}</td>
-          <td><span class="badge ${shiftBadge}">${log.shift}</span></td>
-          <td><strong>${log.output}</strong></td>
-          <td>${log.fg}</td>
-          <td>${cumOut}</td>
-          <td>${cumFG}</td>
-          <td style="color:var(--muted)">${log.note || '–'}</td>
-          <td>
-            <button class="btn btn-danger btn-sm" onclick="deleteLog(${i})">🗑</button>
-          </td>
-        </tr>`;
+    // ── Listen real-time settings ──
+    settingsRef.on('value', snap => {
+      const data = snap.val();
+      if (data) {
+        localState.po         = data.po         ?? 470;
+        localState.baseOutput = data.baseOutput  ?? 399;
+        localState.baseFG     = data.baseFG      ?? 0;
+      } else {
+        // Inisialisasi default jika database kosong
+        settingsRef.set({ po: 470, baseOutput: 399, baseFG: 0 });
+      }
+      renderAll();
+    }, err => {
+      console.error('Settings error:', err);
+      setSyncStatus('error', '❌ Gagal baca settings: ' + err.message);
     });
 
-    tbody.innerHTML = html;
-  }
-
-  // ============================================================
-  // ADD ENTRY
-  // ============================================================
-  function addEntry() {
-    const dateVal   = document.getElementById('inDate').value;
-    const shift     = document.getElementById('inShift').value;
-    const outputVal = parseInt(document.getElementById('inOutput').value) || 0;
-    const fgVal     = parseInt(document.getElementById('inFG').value) || 0;
-    const note      = document.getElementById('inNote').value.trim();
-
-    if (!dateVal) { alert('⚠️ Tanggal wajib diisi!'); return; }
-    if (outputVal < 0 || fgVal < 0) { alert('⚠️ Nilai tidak boleh negatif!'); return; }
-
-    state.logs.push({
-      date: dateVal, shift,
-      output: outputVal, fg: fgVal, note
+    // ── Listen real-time logs ──
+    logsRef.on('value', snap => {
+      const data = snap.val();
+      localState.logs = [];
+      if (data) {
+        Object.entries(data).forEach(([key, val]) => {
+          localState.logs.push({ ...val, key });
+        });
+        // Urutkan berdasarkan tanggal lalu shift
+        localState.logs.sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return a.shift.localeCompare(b.shift);
+        });
+      }
+      document.getElementById('loadingOverlay').style.display = 'none';
+      setSyncStatus('synced', '🟢 Tersinkron di semua perangkat');
+      renderAll();
+    }, err => {
+      console.error('Logs error:', err);
+      document.getElementById('loadingOverlay').style.display = 'none';
+      setSyncStatus('error', '❌ Gagal sinkron: ' + err.message);
     });
 
-    // Sort by date
-    state.logs.sort((a, b) => a.date.localeCompare(b.date));
-
-    saveState();
-    renderAll();
-
-    // Reset form
-    document.getElementById('inOutput').value = '';
-    document.getElementById('inFG').value     = '';
-    document.getElementById('inNote').value   = '';
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    document.getElementById('loadingOverlay').style.display = 'none';
+    setSyncStatus('error', '❌ Error Firebase: ' + e.message);
+    fallbackToLocal();
   }
+}
 
-  // ============================================================
-  // DELETE LOG
-  // ============================================================
-  function deleteLog(idx) {
-    if (!confirm('Hapus entri ini?')) return;
-    state.logs.splice(idx, 1);
-    saveState();
-    renderAll();
-  }
-
-  // ============================================================
-  // PO MODAL
-  // ============================================================
-  function openPoModal() {
-    document.getElementById('moPO').value     = state.po;
-    document.getElementById('moBase').value   = state.baseOutput;
-    document.getElementById('moFGBase').value = state.baseFG;
-    document.getElementById('poModal').classList.add('open');
-  }
-  function closePoModal() {
-    document.getElementById('poModal').classList.remove('open');
-  }
-  function savePoSettings() {
-    const newPO   = parseInt(document.getElementById('moPO').value)     || 470;
-    const newBase = parseInt(document.getElementById('moBase').value)    || 0;
-    const newFGB  = parseInt(document.getElementById('moFGBase').value)  || 0;
-    state.po         = newPO;
-    state.baseOutput = newBase;
-    state.baseFG     = newFGB;
-    saveState();
-    renderAll();
-    closePoModal();
-  }
-
-  // ============================================================
-  // CLOCK
-  // ============================================================
-  function tickClock() {
-    const now = new Date();
-    document.getElementById('clock').textContent =
-      now.toLocaleString('id-ID', {
-        weekday:'short', day:'2-digit', month:'short', year:'numeric',
-        hour:'2-digit', minute:'2-digit', second:'2-digit'
-      });
-  }
-
-  // ============================================================
-  // INIT DATE INPUT
-  // ============================================================
-  function initDateInput() {
-    const today = new Date().toISOString().slice(0, 10);
-    document.getElementById('inDate').value = today;
-  }
-
-  // ============================================================
-  // RENDER ALL
-  // ============================================================
-  function renderAll() {
-    renderKPI();
-    renderEst();
-    renderLog();
-  }
-
-  // ============================================================
-  // BOOT
-  // ============================================================
-  tickClock();
-  setInterval(tickClock, 1000);
-  initDateInput();
+// ── FALLBACK localStorage jika Firebase belum dikonfigurasi ──
+function fallbackToLocal() {
+  try {
+    const raw = localStorage.getItem('assemblyTracker_local');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      localState.po         = saved.po         ?? 470;
+      localState.baseOutput = saved.baseOutput  ?? 399;
+      localState.baseFG     = saved.baseFG      ?? 0;
+      localState.logs       = saved.logs        ?? [];
+    }
+  } catch(e) {}
+  document.getElementById('loadingOverlay').style.display = 'none';
   renderAll();
+}
+
+function saveLocal() {
+  localStorage.setItem('assemblyTracker_local', JSON.stringify({
+    po: localState.po,
+    baseOutput: localState.baseOutput,
+    baseFG: localState.baseFG,
+    logs: localState.logs
+  }));
+}
+
+// ── SYNC STATUS PILL ──
+function setSyncStatus(type, text) {
+  const pill = document.getElementById('syncPill');
+  const dot  = pill.querySelector('.sync-dot');
+  const span = document.getElementById('syncText');
+  pill.className = 'sync-pill ' + type;
+  dot.className  = 'sync-dot' + (type === 'connecting' ? ' pulse' : '');
+  span.textContent = text;
+}
+
+// ================================================================
+//  COMPUTED
+// ================================================================
+function computeTotals() {
+  const totalOutputLog = localState.logs.reduce((s, l) => s + (l.output || 0), 0);
+  const totalFGLog     = localState.logs.reduce((s, l) => s + (l.fg     || 0), 0);
+  const totalOutput    = localState.baseOutput + totalOutputLog;
+  const totalFG        = localState.baseFG     + totalFGLog;
+  const kurang         = Math.max(0, localState.po - totalOutput);
+  const belumFG        = Math.max(0, totalOutput - totalFG);
+  const pct            = Math.min(100, Math.round(totalOutput / localState.po * 100));
+  return { totalOutput, totalFG, kurang, belumFG, pct };
+}
+
+// ================================================================
+//  RENDER
+// ================================================================
+function renderKPI() {
+  const t = computeTotals();
+  document.getElementById('kpiPO').textContent      = localState.po;
+  document.getElementById('kpiDone').textContent    = t.totalOutput;
+  document.getElementById('kpiKurang').textContent  = t.kurang;
+  document.getElementById('kpiFG').textContent      = t.totalFG;
+  document.getElementById('kpiBelumFG').textContent = t.belumFG;
+
+  const pf     = document.getElementById('progressFill');
+  const pctStr = t.pct + '%';
+  pf.style.width = pctStr;
+  pf.dataset.pct = pctStr;
+  document.getElementById('pctLabel').textContent = pctStr;
+
+  const ab  = document.getElementById('alertBox');
+  const msg = document.getElementById('alertMsg');
+  if (t.kurang === 0) {
+    ab.className = 'alert success';
+    msg.textContent = `🎉 PO SELESAI! Semua ${localState.po} unit telah terakit. Kirim seluruh unit ke Finish Goods.`;
+  } else if (t.pct >= 80) {
+    ab.className = 'alert warn';
+    msg.textContent = `⚠️ Hampir selesai! ${t.totalOutput} dari ${localState.po} unit (${t.pct}%). Sisa ${t.kurang} unit.`;
+  } else {
+    ab.className = 'alert info';
+    msg.textContent = `📌 Progress: ${t.totalOutput} dari ${localState.po} unit (${t.pct}%). Kekurangan: ${t.kurang} unit. FG terkirim: ${t.totalFG} unit.`;
+  }
+}
+
+function addWorkdays(startDate, days) {
+  let d = new Date(startDate);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0) added++;
+  }
+  return d;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function renderEst() {
+  const t = computeTotals();
+  if (t.kurang <= 0) {
+    document.getElementById('estSlow').textContent     = 'SELESAI ✅';
+    document.getElementById('estSlowDays').textContent = '';
+    document.getElementById('estFast').textContent     = 'SELESAI ✅';
+    document.getElementById('estFastDays').textContent = '';
+    return;
+  }
+  const now      = new Date();
+  const daysSlow = Math.ceil(t.kurang / 15);
+  const daysFast = Math.ceil(t.kurang / 18);
+  document.getElementById('estSlow').textContent     = formatDate(addWorkdays(now, daysSlow));
+  document.getElementById('estSlowDays').textContent = `≈ ${daysSlow} hari kerja lagi (sisa ${t.kurang} ÷ 15/hari)`;
+  document.getElementById('estFast').textContent     = formatDate(addWorkdays(now, daysFast));
+  document.getElementById('estFastDays').textContent = `≈ ${daysFast} hari kerja lagi (sisa ${t.kurang} ÷ 18/hari)`;
+}
+
+function renderLog() {
+  const tbody = document.getElementById('logBody');
+  if (!localState.logs.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Belum ada data log.</td></tr>`;
+    return;
+  }
+  let cumOut = localState.baseOutput;
+  let cumFG  = localState.baseFG;
+  let html   = '';
+  localState.logs.forEach((log, i) => {
+    cumOut += (log.output || 0);
+    cumFG  += (log.fg     || 0);
+    const sb = log.shift === 'Siang' ? 'badge-orange' : log.shift === 'Malam' ? 'badge-green' : 'badge-blue';
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${log.date}</td>
+        <td><span class="badge ${sb}">${log.shift}</span></td>
+        <td><strong>${log.output}</strong></td>
+        <td>${log.fg}</td>
+        <td>${cumOut}</td>
+        <td>${cumFG}</td>
+        <td style="color:var(--muted)">${log.note || '–'}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteLog('${log.key || i}')">🗑</button>
+        </td>
+      </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function renderAll() {
+  renderKPI();
+  renderEst();
+  renderLog();
+}
+
+// ================================================================
+//  ADD ENTRY
+// ================================================================
+function addEntry() {
+  const dateVal   = document.getElementById('inDate').value;
+  const shift     = document.getElementById('inShift').value;
+  const outputVal = parseInt(document.getElementById('inOutput').value) || 0;
+  const fgVal     = parseInt(document.getElementById('inFG').value)     || 0;
+  const note      = document.getElementById('inNote').value.trim();
+
+  if (!dateVal) { alert('⚠️ Tanggal wajib diisi!'); return; }
+
+  const entry = { date: dateVal, shift, output: outputVal, fg: fgVal, note, createdAt: Date.now() };
+
+  if (isConfigured && logsRef) {
+    setSyncStatus('connecting', 'Menyimpan…');
+    logsRef.push(entry)
+      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
+      .catch(e => {
+        setSyncStatus('error', '❌ Gagal simpan: ' + e.message);
+        alert('Gagal menyimpan: ' + e.message);
+      });
+  } else {
+    // Fallback local
+    localState.logs.push({ ...entry, key: Date.now().toString() });
+    localState.logs.sort((a,b) => a.date.localeCompare(b.date));
+    saveLocal();
+    renderAll();
+  }
+
+  // Reset form
+  document.getElementById('inOutput').value = '';
+  document.getElementById('inFG').value     = '';
+  document.getElementById('inNote').value   = '';
+}
+
+// ================================================================
+//  DELETE LOG
+// ================================================================
+function deleteLog(keyOrIdx) {
+  if (!confirm('Hapus entri ini?')) return;
+
+  if (isConfigured && logsRef) {
+    setSyncStatus('connecting', 'Menghapus…');
+    logsRef.child(keyOrIdx).remove()
+      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
+      .catch(e => setSyncStatus('error', '❌ Gagal hapus: ' + e.message));
+  } else {
+    const idx = localState.logs.findIndex(l => l.key === keyOrIdx || String(l.key) === String(keyOrIdx));
+    if (idx > -1) localState.logs.splice(idx, 1);
+    saveLocal();
+    renderAll();
+  }
+}
+
+// ================================================================
+//  PO SETTINGS MODAL
+// ================================================================
+function openPoModal() {
+  document.getElementById('moPO').value     = localState.po;
+  document.getElementById('moBase').value   = localState.baseOutput;
+  document.getElementById('moFGBase').value = localState.baseFG;
+  document.getElementById('poModal').classList.add('open');
+}
+function closePoModal() {
+  document.getElementById('poModal').classList.remove('open');
+}
+function savePoSettings() {
+  const newPO  = parseInt(document.getElementById('moPO').value)     || 470;
+  const newBase= parseInt(document.getElementById('moBase').value)    || 0;
+  const newFGB = parseInt(document.getElementById('moFGBase').value)  || 0;
+
+  if (isConfigured && settingsRef) {
+    setSyncStatus('connecting', 'Menyimpan settings…');
+    settingsRef.set({ po: newPO, baseOutput: newBase, baseFG: newFGB })
+      .then(() => setSyncStatus('synced', '🟢 Tersinkron di semua perangkat'))
+      .catch(e => setSyncStatus('error', '❌ Gagal simpan: ' + e.message));
+  } else {
+    localState.po         = newPO;
+    localState.baseOutput = newBase;
+    localState.baseFG     = newFGB;
+    saveLocal();
+    renderAll();
+  }
+  closePoModal();
+}
+
+// ================================================================
+//  CLOCK
+// ================================================================
+function tickClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('id-ID', {
+      weekday:'short', day:'2-digit', month:'short', year:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+}
+
+// ================================================================
+//  BOOT
+// ================================================================
+document.getElementById('inDate').value = new Date().toISOString().slice(0,10);
+tickClock();
+setInterval(tickClock, 1000);
+initFirebase();
 </script>
 </body>
 </html>
