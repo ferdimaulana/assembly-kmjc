@@ -3,575 +3,698 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ProdTrack FG Sync - Monitoring Produksi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <title>Assembly Tracker – Kanindo Makmur Jaya 2 Gedung C</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:   #1a56db;
+      --primary-d: #1e40af;
+      --success:   #057a55;
+      --danger:    #c81e1e;
+      --warning:   #92400e;
+      --warn-bg:   #fffbeb;
+      --warn-bd:   #f59e0b;
+      --bg:        #f3f4f6;
+      --card:      #ffffff;
+      --text:      #111827;
+      --muted:     #6b7280;
+      --border:    #e5e7eb;
+      --radius:    12px;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #1e40af 0%, #1a56db 60%, #2563eb 100%);
+      color: #fff;
+      padding: 20px 24px 18px;
+      box-shadow: 0 4px 12px rgba(30,64,175,.35);
+    }
+    header .brand { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
+    header h1 { font-size: 22px; font-weight: 700; line-height: 1.2; }
+    header .subtitle { font-size: 13px; opacity: .8; margin-top: 2px; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+    .datetime-badge {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      text-align: right;
+    }
+    .datetime-badge span { display: block; font-size: 11px; opacity: .75; }
+
+    /* ===== LAYOUT ===== */
+    main { max-width: 960px; margin: 24px auto; padding: 0 16px 40px; }
+
+    /* ===== SECTION TITLE ===== */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 28px 0 12px;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      padding: 20px 22px;
+      margin-bottom: 16px;
+    }
+
+    /* ===== KPI GRID ===== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .kpi::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi.blue::before   { background: #3b82f6; }
+    .kpi.green::before  { background: #10b981; }
+    .kpi.red::before    { background: #ef4444; }
+    .kpi.orange::before { background: #f59e0b; }
+    .kpi.purple::before { background: #8b5cf6; }
+    .kpi label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+    .kpi .val  { font-size: 32px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+    .kpi .sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .kpi.blue   .val { color: #1a56db; }
+    .kpi.green  .val { color: #057a55; }
+    .kpi.red    .val { color: #c81e1e; }
+    .kpi.orange .val { color: #92400e; }
+    .kpi.purple .val { color: #6d28d9; }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-wrap { margin: 14px 0 6px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .progress-label strong { font-weight: 700; }
+    .progress-bg {
+      background: #e5e7eb;
+      border-radius: 100px;
+      height: 18px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, #1a56db, #10b981);
+      transition: width .6s ease;
+      position: relative;
+    }
+    .progress-fill::after {
+      content: attr(data-pct);
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* ===== FORM ===== */
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+    .form-group small { font-size: 11px; color: var(--muted); margin-top: 4px; display: block; }
+
+    /* ===== BUTTON ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(26,86,219,.35); }
+    .btn-danger  { background: #fee2e2; color: var(--danger); }
+    .btn-danger:hover  { background: #fecaca; }
+    .btn-success { background: #d1fae5; color: var(--success); }
+    .btn-success:hover { background: #a7f3d0; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    /* ===== ESTIMATION CARD ===== */
+    .est-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .est-item { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); }
+    .est-item.slow  { background: #fffbeb; border-color: #f59e0b; }
+    .est-item.fast  { background: #f0fdf4; border-color: #10b981; }
+    .est-item label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+    .est-item .date { font-size: 20px; font-weight: 800; margin-top: 4px; }
+    .est-item.slow .date { color: #92400e; }
+    .est-item.fast .date { color: #057a55; }
+    .est-item .days { font-size: 12px; color: var(--muted); }
+
+    /* ===== LOG TABLE ===== */
+    .table-wrap { overflow-x: auto; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #f9fafb;
+      border-bottom: 2px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9fafb; }
+    tbody td { padding: 10px 12px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-orange { background: #fef3c7; color: #92400e; }
+
+    /* ===== ALERT / NOTICE ===== */
+    .alert {
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid;
+      font-size: 13px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert.info    { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+    .alert.success { background: #f0fdf4; border-color: #6ee7b7; color: #065f46; }
+    .alert.warn    { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+    .alert .icon   { font-size: 18px; flex-shrink: 0; margin-top: -1px; }
+
+    /* ===== KIRIM TO FINISH GOODS ===== */
+    .fg-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .fg-total { font-size: 22px; font-weight: 800; color: var(--success); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .est-grid { grid-template-columns: 1fr; }
+      .kpi .val  { font-size: 26px; }
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 28px 28px 22px;
+      width: min(420px, 92vw);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+    /* scrollbar slim */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
+<body>
 
-  <!-- HEADER -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow">
-          <i class="fa-solid fa-industry"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-lg text-slate-900">ProdTrack <span class="text-indigo-600">FG Sync</span></h1>
-            <span id="syncBadge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
-              <i class="fa-solid fa-rotate fa-spin mr-1"></i> Menghubungkan...
-            </span>
-          </div>
-          <p class="text-xs text-slate-500">Monitoring Total PO, Output Harian Per Tanggal, Balance, Estimasi Selesai & Finish Good</p>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="loadSampleData()" class="text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 font-medium text-slate-700">
-          <i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i> Muat Data Contoh
-        </button>
-        <button onclick="exportCSV()" class="text-xs px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 font-medium text-emerald-700">
-          <i class="fa-solid fa-file-excel mr-1"></i> Export Excel/CSV
-        </button>
-        <button onclick="openPOModal()" class="text-xs px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
-          <i class="fa-solid fa-plus mr-1"></i> Tambah PO Baru
-        </button>
-      </div>
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-row">
+    <div>
+      <div class="brand">📦 Assembly Tracker</div>
+      <h1>Kanindo Makmur Jaya 2 – Gedung C</h1>
+      <div class="subtitle">Supervisor Assembly · Monitoring Output &amp; Pengiriman ke Finish Goods</div>
     </div>
-  </header>
+    <div class="datetime-badge">
+      <span>Tanggal &amp; Waktu</span>
+      <strong id="clock">–</strong>
+    </div>
+  </div>
+</header>
 
-  <!-- PERINGATAN FIREBASE RULES -->
-  <div id="rulesAlert" class="hidden max-w-7xl mx-auto px-4 mt-4">
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
-      <div>
-        <strong><i class="fa-solid fa-triangle-exclamation mr-1"></i> Perhatian:</strong>
-        Pastikan Rules Firebase Anda sudah diatur ke <code>".read": true, ".write": true</code> agar data tersimpan permanen dan sinkron ke semua perangkat.
+<main>
+
+  <!-- ===== ALERT STATUS ===== -->
+  <div id="alertBox" class="alert info" style="margin-top:4px;">
+    <span class="icon">ℹ️</span>
+    <span id="alertMsg">Memuat status produksi…</span>
+  </div>
+
+  <!-- ===== KPI ===== -->
+  <div class="section-title">📊 Ringkasan PO Saat Ini</div>
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <label>Total PO</label>
+      <div class="val" id="kpiPO">–</div>
+      <div class="sub">Target keseluruhan</div>
+    </div>
+    <div class="kpi green">
+      <label>Output Selesai</label>
+      <div class="val" id="kpiDone">–</div>
+      <div class="sub">Unit terakit</div>
+    </div>
+    <div class="kpi red">
+      <label>Kekurangan</label>
+      <div class="val" id="kpiKurang">–</div>
+      <div class="sub">Sisa target</div>
+    </div>
+    <div class="kpi purple">
+      <label>Dikirim ke FG</label>
+      <div class="val" id="kpiFG">–</div>
+      <div class="sub">Finish Goods</div>
+    </div>
+    <div class="kpi orange">
+      <label>Belum Dikirim</label>
+      <div class="val" id="kpiBelumFG">–</div>
+      <div class="sub">Di gudang assembly</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="card" style="margin-bottom:0">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progress PO</span>
+        <strong id="pctLabel">0%</strong>
+      </div>
+      <div class="progress-bg">
+        <div class="progress-fill" id="progressFill" style="width:0%" data-pct="0%"></div>
       </div>
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
-  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
-
-    <!-- 5 KARTU RINGKASAN -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
-          <span>Total Target PO</span>
-          <i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i>
-        </div>
-        <div class="mt-2 text-2xl font-extrabold text-slate-900"><span id="sumPO">0</span> <span class="text-xs font-normal text-slate-500">pcs</span></div>
-        <div class="mt-1 text-xs text-slate-400" id="sumPOCount">Dari 0 PO aktif</div>
+  <!-- ===== ESTIMASI SELESAI ===== -->
+  <div class="section-title">🗓️ Estimasi Penyelesaian</div>
+  <div class="card">
+    <div class="est-grid">
+      <div class="est-item slow">
+        <label>⏱ Skenario Lambat (15/hari)</label>
+        <div class="date" id="estSlow">–</div>
+        <div class="days" id="estSlowDays">–</div>
       </div>
-
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
-          <span>Total Output Produksi</span>
-          <i class="fa-solid fa-gears text-blue-500 text-base"></i>
-        </div>
-        <div class="mt-2 text-2xl font-extrabold text-blue-600"><span id="sumOutput">0</span> <span class="text-xs font-normal text-slate-500">pcs</span></div>
-        <div class="mt-1 text-xs text-slate-400" id="sumOutputPct">Pencapaian: 0%</div>
-      </div>
-
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
-          <span>Kekurangan (Balance)</span>
-          <i class="fa-solid fa-chart-line text-rose-500 text-base"></i>
-        </div>
-        <div class="mt-2 text-2xl font-extrabold text-rose-600"><span id="sumShortage">0</span> <span class="text-xs font-normal text-slate-500">pcs</span></div>
-        <div class="mt-1 text-xs text-slate-400">Sisa yang harus diproduksi</div>
-      </div>
-
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
-          <span>Terkirim ke Finish Good</span>
-          <i class="fa-solid fa-truck-ramp-box text-emerald-500 text-base"></i>
-        </div>
-        <div class="mt-2 text-2xl font-extrabold text-emerald-600"><span id="sumFG">0</span> <span class="text-xs font-normal text-slate-500">pcs</span></div>
-        <div class="mt-1 text-xs text-slate-400" id="sumFGPct">0% dari total PO</div>
-      </div>
-
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
-          <span>Stok Ready di Line (WIP)</span>
-          <i class="fa-solid fa-box-open text-amber-500 text-base"></i>
-        </div>
-        <div class="mt-2 text-2xl font-extrabold text-amber-600"><span id="sumWIP">0</span> <span class="text-xs font-normal text-slate-500">pcs</span></div>
-        <div class="mt-1 text-xs text-slate-400">Selesai produksi, belum kirim FG</div>
+      <div class="est-item fast">
+        <label>⚡ Skenario Cepat (18/hari)</label>
+        <div class="date" id="estFast">–</div>
+        <div class="days" id="estFastDays">–</div>
       </div>
     </div>
-
-    <!-- PENCARIAN & STATUS -->
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-      <div class="relative flex-1 min-w-[240px]">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
-        <input id="searchInput" oninput="renderAll()" type="text" placeholder="Cari Nomor PO, Style / Item, atau Line..." class="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
-      <div class="flex items-center gap-2 text-xs text-slate-500">
-        <span>Status Database:</span>
-        <strong id="dbStatusText" class="text-slate-700">Memeriksa...</strong>
-      </div>
-    </div>
-
-    <!-- TABEL UTAMA -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200">
-              <th class="py-3 px-4">No. PO & Style / Line</th>
-              <th class="py-3 px-4 text-right">Target PO</th>
-              <th class="py-3 px-4 text-right">Output Harian (Per Tanggal) & Total</th>
-              <th class="py-3 px-4 text-right">Kekurangan</th>
-              <th class="py-3 px-4 text-center">Estimasi Selesai</th>
-              <th class="py-3 px-4 text-right">Transfer Finish Good (FG)</th>
-              <th class="py-3 px-4 text-center">Aksi Input & Edit</th>
-            </tr>
-          </thead>
-          <tbody id="poTableBody" class="divide-y divide-slate-200 text-sm"></tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- MODAL TAMBAH/EDIT PO -->
-  <div id="modalPO" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-      <h3 id="modalPOTitle" class="text-lg font-bold text-slate-900 mb-4">Tambah PO Baru</h3>
-      <form id="formPO" onsubmit="savePO(event)" class="space-y-3 text-sm">
-        <input type="hidden" id="poId" />
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Nomor PO</label>
-          <input id="poNumber" required type="text" placeholder="Contoh: PO-2026-001" class="w-full px-3 py-2 border rounded-lg" />
-        </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Nama Style / Artikel / Barang</label>
-          <input id="poStyle" required type="text" placeholder="Contoh: Luggage Hardcase 20 Inch" class="w-full px-3 py-2 border rounded-lg" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">Line Produksi</label>
-            <input id="poLine" required type="text" placeholder="Contoh: Line A1" class="w-full px-3 py-2 border rounded-lg" />
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">Total Target PO (pcs)</label>
-            <input id="poTarget" required type="number" min="1" placeholder="1000" class="w-full px-3 py-2 border rounded-lg" />
-          </div>
-        </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Target Harian (pcs/hari)</label>
-          <input id="poDailyTarget" required type="number" min="1" placeholder="200" class="w-full px-3 py-2 border rounded-lg" />
-        </div>
-        <div class="flex justify-end gap-2 pt-3">
-          <button type="button" onclick="closePOModal()" class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-100">Batal</button>
-          <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Simpan PO</button>
-        </div>
-      </form>
+    <div style="margin-top:12px; font-size:12px; color:var(--muted);">
+      ⚙️ Rata-rata 15–18 unit/hari · Hari kerja (Senin–Sabtu). Minggu libur.
     </div>
   </div>
 
-  <!-- MODAL INPUT OUTPUT HARIAN PER TANGGAL / TRANSFER FG -->
-  <div id="modalTx" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
-      <h3 id="modalTxTitle" class="text-lg font-bold text-slate-900 mb-1">Input Data</h3>
-      <p id="modalTxSub" class="text-xs text-slate-500 mb-4"></p>
-      <form onsubmit="saveTx(event)" class="space-y-3 text-sm">
-        <input type="hidden" id="txPoId" />
-        <input type="hidden" id="txType" />
-        
-        <div id="dateContainer">
-          <label class="block font-medium text-slate-700 mb-1">Tanggal Produksi</label>
-          <input id="txDate" type="date" class="w-full px-3 py-2 border rounded-lg text-sm" />
-        </div>
-
-        <div>
-          <label id="txLabel" class="block font-medium text-slate-700 mb-1">Jumlah (pcs)</label>
-          <input id="txQty" required type="number" min="1" placeholder="Masukkan jumlah pcs..." class="w-full px-3 py-2 border rounded-lg text-lg font-bold" />
-        </div>
-        <div class="flex justify-end gap-2 pt-3">
-          <button type="button" onclick="closeTxModal()" class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-100">Batal</button>
-          <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Tambahkan</button>
-        </div>
-      </form>
+  <!-- ===== INPUT FORM ===== -->
+  <div class="section-title">➕ Input Output Harian</div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inDate">Tanggal</label>
+        <input type="date" id="inDate" />
+      </div>
+      <div class="form-group">
+        <label for="inShift">Shift</label>
+        <select id="inShift">
+          <option value="Pagi">Pagi</option>
+          <option value="Siang">Siang</option>
+          <option value="Malam">Malam</option>
+          <option value="Full">Full Day</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="inOutput">Output Hari Ini</label>
+        <input type="number" id="inOutput" min="0" placeholder="Contoh: 18" />
+        <small>Unit yang selesai dirakit</small>
+      </div>
+      <div class="form-group">
+        <label for="inFG">Dikirim ke FG</label>
+        <input type="number" id="inFG" min="0" placeholder="Contoh: 20" />
+        <small>Unit ke Finish Goods hari ini</small>
+      </div>
+      <div class="form-group">
+        <label for="inNote">Catatan</label>
+        <input type="text" id="inNote" placeholder="Opsional…" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addEntry()">💾 Simpan Log</button>
+      <button class="btn btn-success" onclick="openPoModal()">🔧 Ubah Target PO</button>
     </div>
   </div>
 
-  <!-- SCRIPT FIREBASE & LOGIKA APLIKASI -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    const DB_URL = "https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app";
-    const LOCAL_KEY = "kmjc_prodtrack_v2";
-
-    let poList = [];
-    const savedLocal = localStorage.getItem(LOCAL_KEY);
-    if (savedLocal) {
-      try { poList = JSON.parse(savedLocal); } catch (e) { poList = []; }
-    }
-
-    let dbRef = null;
-
-    try {
-      const app = initializeApp({ databaseURL: DB_URL });
-      const db = getDatabase(app);
-      dbRef = ref(db, "production_data");
-
-      onValue(dbRef, (snapshot) => {
-        document.getElementById("rulesAlert").classList.add("hidden");
-        updateBadge("cloud");
-        const cloudData = snapshot.val();
-        if (cloudData && Array.isArray(cloudData.items)) {
-          poList = cloudData.items;
-          localStorage.setItem(LOCAL_KEY, JSON.stringify(poList));
-        } else if (cloudData === null && poList.length > 0) {
-          set(dbRef, { items: poList, updatedAt: new Date().toISOString() });
-        }
-        renderAll();
-      }, (error) => {
-        handleFirebaseError(error);
-      });
-    } catch (err) {
-      handleFirebaseError(err);
-    }
-
-    function handleFirebaseError(err) {
-      console.warn(err);
-      updateBadge("local");
-      document.getElementById("rulesAlert").classList.remove("hidden");
-      renderAll();
-    }
-
-    function updateBadge(mode) {
-      const badge = document.getElementById("syncBadge");
-      const statusText = document.getElementById("dbStatusText");
-      if (mode === "cloud") {
-        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700";
-        badge.innerHTML = '<i class="fa-solid fa-cloud mr-1"></i> Live Sync Aktif';
-        statusText.innerText = "Terhubung ke Cloud Firebase (assemblykmjc)";
-        statusText.className = "text-emerald-600 font-semibold";
-      } else {
-        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700";
-        badge.innerHTML = '<i class="fa-solid fa-hard-drive mr-1"></i> Mode Lokal';
-        statusText.innerText = "Tersimpan di Browser (Periksa Rules Firebase)";
-        statusText.className = "text-amber-600 font-semibold";
-      }
-    }
-
-    function syncData() {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(poList));
-      renderAll();
-      if (dbRef) {
-        set(dbRef, { items: poList, updatedAt: new Date().toISOString() }).catch(handleFirebaseError);
-      }
-    }
-
-    function calcEstimate(shortage, dailyRate) {
-      if (shortage <= 0) return { text: "Selesai 100%", sub: "Target Terpenuhi", color: "bg-emerald-100 text-emerald-700" };
-      if (!dailyRate || dailyRate <= 0) return { text: "Belum ada output", sub: "-", color: "bg-slate-100 text-slate-600" };
-      const daysNeeded = Math.ceil(shortage / dailyRate);
-      let d = new Date();
-      let added = 0;
-      while (added < daysNeeded) {
-        d.setDate(d.getDate() + 1);
-        if (d.getDay() !== 0) added++; // Lewati hari Minggu
-      }
-      const dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-      return { text: `${daysNeeded} Hari Kerja Lagi`, sub: `Est: ${dateStr}`, color: "bg-indigo-50 text-indigo-700" };
-    }
-
-    window.renderAll = function () {
-      const q = (document.getElementById("searchInput").value || "").toLowerCase();
-      const tbody = document.getElementById("poTableBody");
-
-      let totalPO = 0, totalOut = 0, totalShort = 0, totalFG = 0, totalWIP = 0;
-
-      poList.forEach(item => {
-        const target = Number(item.target) || 0;
-        // Hitung total output dari seluruh riwayat harian
-        const output = (item.dailyOutputs || []).reduce((acc, curr) => acc + Number(curr.qty), 0);
-        const fg = Number(item.fg) || 0;
-        const short = Math.max(0, target - output);
-        const wip = Math.max(0, output - fg);
-
-        totalPO += target;
-        totalOut += output;
-        totalShort += short;
-        totalFG += fg;
-        totalWIP += wip;
-      });
-
-      document.getElementById("sumPO").innerText = totalPO.toLocaleString("id-ID");
-      document.getElementById("sumPOCount").innerText = `Dari ${poList.length} Purchase Order aktif`;
-      document.getElementById("sumOutput").innerText = totalOut.toLocaleString("id-ID");
-      document.getElementById("sumOutputPct").innerText = `Pencapaian: ${totalPO ? Math.round((totalOut / totalPO) * 100) : 0}%`;
-      document.getElementById("sumShortage").innerText = totalShort.toLocaleString("id-ID");
-      document.getElementById("sumFG").innerText = totalFG.toLocaleString("id-ID");
-      document.getElementById("sumFGPct").innerText = `${totalPO ? Math.round((totalFG / totalPO) * 100) : 0}% dari total PO`;
-      document.getElementById("sumWIP").innerText = totalWIP.toLocaleString("id-ID");
-
-      const filtered = poList.filter(p =>
-        (p.poNumber || "").toLowerCase().includes(q) ||
-        (p.style || "").toLowerCase().includes(q) ||
-        (p.line || "").toLowerCase().includes(q)
-      );
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400">Belum ada data PO. Klik <b>"+ Tambah PO Baru"</b> di kanan atas untuk mulai.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(item => {
-        const target = Number(item.target) || 0;
-        const dailyOutputs = item.dailyOutputs || [];
-        const output = dailyOutputs.reduce((acc, curr) => acc + Number(curr.qty), 0);
-        const fg = Number(item.fg) || 0;
-        const dailyTarget = Number(item.dailyTarget) || 1;
-        const short = Math.max(0, target - output);
-        const wip = Math.max(0, output - fg);
-        const pct = target > 0 ? Math.min(100, Math.round((output / target) * 100)) : 0;
-        
-        // Ambil rata-rata output harian aktual atau target harian untuk estimasi
-        const avgDaily = dailyOutputs.length > 0 ? (output / dailyOutputs.length) : dailyTarget;
-        const est = calcEstimate(short, avgDaily);
-
-        // Buat daftar riwayat output harian per tanggal
-        const historyHtml = dailyOutputs.length > 0 
-          ? dailyOutputs.slice(-3).reverse().map(d => `<div class="text-[11px] text-slate-600">• ${d.date}: <strong class="text-blue-600">+${Number(d.qty).toLocaleString("id-ID")} pcs</strong></div>`).join("")
-          : '<div class="text-[11px] text-slate-400 italic">Belum ada input harian</div>';
-
-        return `
-          <tr class="hover:bg-slate-50 transition align-top">
-            <td class="py-3.5 px-4">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-900">${item.poNumber}</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${item.line}</span>
-              </div>
-              <div class="text-xs text-slate-600 mt-0.5">${item.style}</div>
-              <div class="text-[11px] text-slate-400">Target Harian: ${dailyTarget.toLocaleString("id-ID")} pcs</div>
-            </td>
-            <td class="py-3.5 px-4 text-right font-bold text-slate-800">${target.toLocaleString("id-ID")} <span class="text-xs font-normal text-slate-400">pcs</span></td>
-            <td class="py-3.5 px-4 text-right">
-              <div class="font-bold text-blue-600 text-base">${output.toLocaleString("id-ID")} pcs (${pct}%)</div>
-              <div class="mt-1 bg-slate-50 p-1.5 rounded border border-slate-100 text-left">
-                <div class="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Output Harian Terakhir:</div>
-                ${historyHtml}
-              </div>
-            </td>
-            <td class="py-3.5 px-4 text-right">
-              <span class="px-2.5 py-1 rounded-lg font-bold text-xs ${short > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
-                ${short > 0 ? '-' + short.toLocaleString("id-ID") + ' pcs' : 'Lunas'}
-              </span>
-            </td>
-            <td class="py-3.5 px-4 text-center">
-              <div class="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold ${est.color}">${est.text}</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">${est.sub}</div>
-            </td>
-            <td class="py-3.5 px-4 text-right">
-              <div class="font-bold text-emerald-600">${fg.toLocaleString("id-ID")} pcs</div>
-              <div class="text-[11px] text-amber-600">Ready di Line: ${wip.toLocaleString("id-ID")} pcs</div>
-            </td>
-            <td class="py-3.5 px-4 text-center">
-              <div class="flex flex-col gap-1.5 items-center">
-                <div class="flex gap-1">
-                  <button onclick="openTxModal('${item.id}', 'output')" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
-                    + Output Harian
-                  </button>
-                  <button onclick="openTxModal('${item.id}', 'fg')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium">
-                    + Kirim FG
-                  </button>
-                </div>
-                <div class="flex gap-2 text-xs text-slate-400 mt-0.5">
-                  <button onclick="editPO('${item.id}')" class="hover:text-indigo-600"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                  <button onclick="deletePO('${item.id}')" class="hover:text-rose-600"><i class="fa-solid fa-trash"></i> Hapus</button>
-                </div>
-              </div>
-            </td>
+  <!-- ===== LOG HARIAN ===== -->
+  <div class="section-title">📋 Log Output Harian</div>
+  <div class="card" style="padding:0">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tanggal</th>
+            <th>Shift</th>
+            <th>Output</th>
+            <th>Kirim FG</th>
+            <th>Kum. Output</th>
+            <th>Kum. FG</th>
+            <th>Catatan</th>
+            <th>Aksi</th>
           </tr>
-        `;
-      }).join("");
+        </thead>
+        <tbody id="logBody">
+          <tr>
+            <td colspan="9" style="text-align:center; color:var(--muted); padding:24px;">Belum ada data log.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== MODAL UBAH PO ===== -->
+<div class="modal-overlay" id="poModal">
+  <div class="modal">
+    <h3>🔧 Ubah Target PO</h3>
+    <div class="form-row" style="grid-template-columns:1fr;">
+      <div class="form-group">
+        <label for="moPO">Total PO Baru</label>
+        <input type="number" id="moPO" min="1" />
+      </div>
+      <div class="form-group">
+        <label for="moBase">Output Awal (sudah ada sebelum log)</label>
+        <input type="number" id="moBase" min="0" />
+        <small>Contoh: output 399 sebelum tracking ini dimulai</small>
+      </div>
+      <div class="form-group">
+        <label for="moFGBase">FG Terkirim Awal (sudah ada sebelum log)</label>
+        <input type="number" id="moFGBase" min="0" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="closePoModal()">Batal</button>
+      <button class="btn btn-primary btn-sm" onclick="savePoSettings()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  let state = loadState();
+
+  function defaultState() {
+    return {
+      po: 470,
+      baseOutput: 399,   // output sebelum tracking log dimulai
+      baseFG: 0,         // FG terkirim sebelum tracking dimulai
+      logs: []
     };
+  }
 
-    window.openPOModal = function () {
-      document.getElementById("modalPOTitle").innerText = "Tambah PO Baru";
-      document.getElementById("formPO").reset();
-      document.getElementById("poId").value = "";
-      document.getElementById("modalPO").classList.remove("hidden");
-      document.getElementById("modalPO").classList.add("flex");
-    };
+  function loadState() {
+    try {
+      const raw = localStorage.getItem('assemblyTracker_v2');
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return defaultState();
+  }
 
-    window.closePOModal = function () {
-      document.getElementById("modalPO").classList.add("hidden");
-      document.getElementById("modalPO").classList.remove("flex");
-    };
+  function saveState() {
+    localStorage.setItem('assemblyTracker_v2', JSON.stringify(state));
+  }
 
-    window.editPO = function (id) {
-      const p = poList.find(x => x.id === id);
-      if (!p) return;
-      document.getElementById("modalPOTitle").innerText = "Edit Data PO";
-      document.getElementById("poId").value = p.id;
-      document.getElementById("poNumber").value = p.poNumber;
-      document.getElementById("poStyle").value = p.style;
-      document.getElementById("poLine").value = p.line;
-      document.getElementById("poTarget").value = p.target;
-      document.getElementById("poDailyTarget").value = p.dailyTarget;
-      document.getElementById("modalPO").classList.remove("hidden");
-      document.getElementById("modalPO").classList.add("flex");
-    };
+  // ============================================================
+  // COMPUTED
+  // ============================================================
+  function computeTotals() {
+    let totalOutputLog = state.logs.reduce((s, l) => s + l.output, 0);
+    let totalFGLog     = state.logs.reduce((s, l) => s + l.fg, 0);
+    let totalOutput    = state.baseOutput + totalOutputLog;
+    let totalFG        = state.baseFG + totalFGLog;
+    let kurang         = Math.max(0, state.po - totalOutput);
+    let belumFG        = Math.max(0, totalOutput - totalFG);
+    let pct            = Math.min(100, Math.round(totalOutput / state.po * 100));
+    return { totalOutput, totalFG, kurang, belumFG, pct };
+  }
 
-    window.savePO = function (e) {
-      e.preventDefault();
-      const id = document.getElementById("poId").value;
-      const newObj = {
-        id: id || "PO_" + Date.now(),
-        poNumber: document.getElementById("poNumber").value.trim(),
-        style: document.getElementById("poStyle").value.trim(),
-        line: document.getElementById("poLine").value.trim(),
-        target: Number(document.getElementById("poTarget").value) || 0,
-        dailyTarget: Number(document.getElementById("poDailyTarget").value) || 1,
-        dailyOutputs: [],
-        fg: 0
-      };
+  // ============================================================
+  // RENDER KPI
+  // ============================================================
+  function renderKPI() {
+    const t = computeTotals();
+    document.getElementById('kpiPO').textContent      = state.po;
+    document.getElementById('kpiDone').textContent    = t.totalOutput;
+    document.getElementById('kpiKurang').textContent  = t.kurang;
+    document.getElementById('kpiFG').textContent      = t.totalFG;
+    document.getElementById('kpiBelumFG').textContent = t.belumFG;
 
-      if (id) {
-        const idx = poList.findIndex(x => x.id === id);
-        if (idx > -1) {
-          newObj.dailyOutputs = poList[idx].dailyOutputs || [];
-          newObj.fg = poList[idx].fg || 0;
-          poList[idx] = newObj;
-        }
-      } else {
-        poList.unshift(newObj);
-      }
+    const pf = document.getElementById('progressFill');
+    const pctStr = t.pct + '%';
+    pf.style.width   = pctStr;
+    pf.dataset.pct   = pctStr;
+    document.getElementById('pctLabel').textContent = pctStr;
 
-      closePOModal();
-      syncData();
-    };
+    // alert box
+    const ab  = document.getElementById('alertBox');
+    const msg = document.getElementById('alertMsg');
+    if (t.kurang === 0) {
+      ab.className = 'alert success';
+      msg.textContent = `🎉 PO SELESAI! Semua ${state.po} unit telah terakit. Kirim seluruh unit ke Finish Goods.`;
+    } else if (t.pct >= 80) {
+      ab.className = 'alert warn';
+      msg.textContent = `⚠️ Hampir selesai! Sudah ${t.totalOutput} dari ${state.po} unit (${t.pct}%). Sisa ${t.kurang} unit lagi.`;
+    } else {
+      ab.className = 'alert info';
+      msg.textContent = `📌 Progress: ${t.totalOutput} dari ${state.po} unit (${t.pct}%). Kekurangan: ${t.kurang} unit. FG terkirim: ${t.totalFG} unit.`;
+    }
+  }
 
-    window.deletePO = function (id) {
-      if (!confirm("Yakin ingin menghapus PO ini?")) return;
-      poList = poList.filter(x => x.id !== id);
-      syncData();
-    };
+  // ============================================================
+  // RENDER ESTIMASI
+  // ============================================================
+  function addWorkdays(startDate, days) {
+    let d = new Date(startDate);
+    let added = 0;
+    while (added < days) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() !== 0) added++; // skip Minggu
+    }
+    return d;
+  }
 
-    window.openTxModal = function (id, type) {
-      const p = poList.find(x => x.id === id);
-      if (!p) return;
-      document.getElementById("txPoId").value = id;
-      document.getElementById("txType").value = type;
-      document.getElementById("txQty").value = "";
-      
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById("txDate").value = today;
+  function formatDate(d) {
+    return d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
 
-      const dateContainer = document.getElementById("dateContainer");
+  function renderEst() {
+    const t = computeTotals();
+    const now = new Date();
 
-      if (type === "output") {
-        document.getElementById("modalTxTitle").innerText = "Input Output Harian Per Tanggal";
-        document.getElementById("modalTxSub").innerText = `${p.poNumber} - ${p.style}`;
-        document.getElementById("txLabel").innerText = "Jumlah Output Pada Tanggal Tersebut (pcs)";
-        dateContainer.style.display = "block";
-      } else {
-        document.getElementById("modalTxTitle").innerText = "Transfer ke Finish Good";
-        const currentOut = (p.dailyOutputs || []).reduce((a,c) => a + Number(c.qty), 0);
-        document.getElementById("modalTxSub").innerText = `${p.poNumber} - Ready di Line: ${Math.max(0, currentOut - p.fg)} pcs`;
-        document.getElementById("txLabel").innerText = "Jumlah Dikirim ke FG (pcs)";
-        dateContainer.style.display = "none";
-      }
-      document.getElementById("modalTx").classList.remove("hidden");
-      document.getElementById("modalTx").classList.add("flex");
-    };
+    if (t.kurang <= 0) {
+      document.getElementById('estSlow').textContent     = 'SELESAI ✅';
+      document.getElementById('estSlowDays').textContent = '';
+      document.getElementById('estFast').textContent     = 'SELESAI ✅';
+      document.getElementById('estFastDays').textContent = '';
+      return;
+    }
 
-    window.closeTxModal = function () {
-      document.getElementById("modalTx").classList.add("hidden");
-      document.getElementById("modalTx").classList.remove("flex");
-    };
+    const daysSlow = Math.ceil(t.kurang / 15);
+    const daysFast = Math.ceil(t.kurang / 18);
+    const dateSlow = addWorkdays(now, daysSlow);
+    const dateFast = addWorkdays(now, daysFast);
 
-    window.saveTx = function (e) {
-      e.preventDefault();
-      const id = document.getElementById("txPoId").value;
-      const type = document.getElementById("txType").value;
-      const qty = Number(document.getElementById("txQty").value) || 0;
-      const date = document.getElementById("txDate").value;
-      const idx = poList.findIndex(x => x.id === id);
-      if (idx === -1 || qty <= 0) return;
+    document.getElementById('estSlow').textContent     = formatDate(dateSlow);
+    document.getElementById('estSlowDays').textContent = `≈ ${daysSlow} hari kerja lagi (sisa ${t.kurang} unit ÷ 15/hari)`;
+    document.getElementById('estFast').textContent     = formatDate(dateFast);
+    document.getElementById('estFastDays').textContent = `≈ ${daysFast} hari kerja lagi (sisa ${t.kurang} unit ÷ 18/hari)`;
+  }
 
-      if (!poList[idx].dailyOutputs) poList[idx].dailyOutputs = [];
+  // ============================================================
+  // RENDER LOG TABLE
+  // ============================================================
+  function renderLog() {
+    const tbody = document.getElementById('logBody');
+    if (state.logs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Belum ada data log.</td></tr>`;
+      return;
+    }
 
-      if (type === "output") {
-        if (!date) return alert("Pilih tanggal terlebih dahulu!");
-        // Cek apakah tanggal sudah pernah diinput sebelumnya, jika ya update atau tambahkan
-        const existingDateIdx = poList[idx].dailyOutputs.findIndex(d => d.date === date);
-        if (existingDateIdx > -1) {
-          poList[idx].dailyOutputs[existingDateIdx].qty += qty;
-        } else {
-          poList[idx].dailyOutputs.push({ date: date, qty: qty });
-          // Urutkan berdasarkan tanggal
-          poList[idx].dailyOutputs.sort((a, b) => new Date(a.date) - new Date(b.date));
-        }
-      } else {
-        poList[idx].fg = (Number(poList[idx].fg) || 0) + qty;
-      }
+    let cumOut = state.baseOutput;
+    let cumFG  = state.baseFG;
+    let html   = '';
 
-      closeTxModal();
-      syncData();
-    };
+    state.logs.forEach((log, i) => {
+      cumOut += log.output;
+      cumFG  += log.fg;
+      const shiftBadge = log.shift === 'Full'   ? 'badge-blue'
+                       : log.shift === 'Pagi'   ? 'badge-blue'
+                       : log.shift === 'Siang'  ? 'badge-orange'
+                       :                          'badge-green';
+      html += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${log.date}</td>
+          <td><span class="badge ${shiftBadge}">${log.shift}</span></td>
+          <td><strong>${log.output}</strong></td>
+          <td>${log.fg}</td>
+          <td>${cumOut}</td>
+          <td>${cumFG}</td>
+          <td style="color:var(--muted)">${log.note || '–'}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteLog(${i})">🗑</button>
+          </td>
+        </tr>`;
+    });
 
-    window.loadSampleData = function () {
-      if (poList.length > 0 && !confirm("Muat data contoh? Data saat ini akan diganti.")) return;
-      poList = [
-        { 
-          id: "PO_1", 
-          poNumber: "PO-2026-101", 
-          style: "Luggage Hardcase 24 Inch Black", 
-          line: "Line A1 - Assembly", 
-          target: 2500, 
-          dailyTarget: 500, 
-          dailyOutputs: [
-            { date: "2026-10-23", qty: 400 },
-            { date: "2026-10-24", qty: 450 },
-            { date: "2026-10-25", qty: 350 }
-          ], 
-          fg: 1000 
-        },
-        { 
-          id: "PO_2", 
-          poNumber: "PO-2026-102", 
-          style: "Travel Bag Cabin Series Navy", 
-          line: "Line A2 - Assembly", 
-          target: 1800, 
-          dailyTarget: 350, 
-          dailyOutputs: [
-            { date: "2026-10-24", qty: 200 },
-            { date: "2026-10-25", qty: 250 }
-          ], 
-          fg: 300 
-        }
-      ];
-      syncData();
-    };
+    tbody.innerHTML = html;
+  }
 
-    window.exportCSV = function () {
-      if (poList.length === 0) return alert("Belum ada data untuk di-export!");
-      const headers = ["No PO", "Style", "Line", "Target PO", "Total Output", "Kekurangan", "Terkirim FG", "Stok WIP Line"];
-      const rows = poList.map(p => {
-        const out = (p.dailyOutputs || []).reduce((a,c) => a + Number(c.qty), 0);
-        return [
-          `"${p.poNumber}"`, `"${p.style}"`, `"${p.line}"`,
-          p.target, out, Math.max(0, p.target - out), p.fg, Math.max(0, out - p.fg)
-        ];
-      });
-      const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Rekap_Produksi_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    };
+  // ============================================================
+  // ADD ENTRY
+  // ============================================================
+  function addEntry() {
+    const dateVal   = document.getElementById('inDate').value;
+    const shift     = document.getElementById('inShift').value;
+    const outputVal = parseInt(document.getElementById('inOutput').value) || 0;
+    const fgVal     = parseInt(document.getElementById('inFG').value) || 0;
+    const note      = document.getElementById('inNote').value.trim();
 
+    if (!dateVal) { alert('⚠️ Tanggal wajib diisi!'); return; }
+    if (outputVal < 0 || fgVal < 0) { alert('⚠️ Nilai tidak boleh negatif!'); return; }
+
+    state.logs.push({
+      date: dateVal, shift,
+      output: outputVal, fg: fgVal, note
+    });
+
+    // Sort by date
+    state.logs.sort((a, b) => a.date.localeCompare(b.date));
+
+    saveState();
     renderAll();
-  </script>
+
+    // Reset form
+    document.getElementById('inOutput').value = '';
+    document.getElementById('inFG').value     = '';
+    document.getElementById('inNote').value   = '';
+  }
+
+  // ============================================================
+  // DELETE LOG
+  // ============================================================
+  function deleteLog(idx) {
+    if (!confirm('Hapus entri ini?')) return;
+    state.logs.splice(idx, 1);
+    saveState();
+    renderAll();
+  }
+
+  // ============================================================
+  // PO MODAL
+  // ============================================================
+  function openPoModal() {
+    document.getElementById('moPO').value     = state.po;
+    document.getElementById('moBase').value   = state.baseOutput;
+    document.getElementById('moFGBase').value = state.baseFG;
+    document.getElementById('poModal').classList.add('open');
+  }
+  function closePoModal() {
+    document.getElementById('poModal').classList.remove('open');
+  }
+  function savePoSettings() {
+    const newPO   = parseInt(document.getElementById('moPO').value)     || 470;
+    const newBase = parseInt(document.getElementById('moBase').value)    || 0;
+    const newFGB  = parseInt(document.getElementById('moFGBase').value)  || 0;
+    state.po         = newPO;
+    state.baseOutput = newBase;
+    state.baseFG     = newFGB;
+    saveState();
+    renderAll();
+    closePoModal();
+  }
+
+  // ============================================================
+  // CLOCK
+  // ============================================================
+  function tickClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleString('id-ID', {
+        weekday:'short', day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit', second:'2-digit'
+      });
+  }
+
+  // ============================================================
+  // INIT DATE INPUT
+  // ============================================================
+  function initDateInput() {
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('inDate').value = today;
+  }
+
+  // ============================================================
+  // RENDER ALL
+  // ============================================================
+  function renderAll() {
+    renderKPI();
+    renderEst();
+    renderLog();
+  }
+
+  // ============================================================
+  // BOOT
+  // ============================================================
+  tickClock();
+  setInterval(tickClock, 1000);
+  initDateInput();
+  renderAll();
+</script>
 </body>
 </html>
