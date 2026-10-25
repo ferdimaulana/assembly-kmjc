@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProdTrack FG Sync — Sistem Monitoring Produksi & Finish Good</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-16">
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      
+      <!-- Brand & Live Sync Badge -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+            <i class="fa-solid fa-industry text-white text-lg"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
+                ProdTrack <span class="text-indigo-400 font-normal">FG Sync</span>
+              </h1>
+              <!-- Status Badge -->
+              <span id="syncBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
+                <span>Menghubungkan...</span>
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Monitoring Total PO, Output Harian, Balance, Estimasi Selesai & Transfer Finish Good
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnOpenDbConfig" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="Atur koneksi Firebase Realtime Database agar sinkron di semua HP/Laptop">
+          <i class="fa-solid fa-database text-indigo-400"></i>
+          <span>Pengaturan Database</span>
+        </button>
+
+        <button id="btnLoadDemo" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+          <span>Muat Data Contoh</span>
+        </button>
+
+        <button id="btnExportCSV" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+          <i class="fa-solid fa-file-csv text-emerald-400"></i>
+          <span>Export Excel/CSV</span>
+        </button>
+
+        <button id="btnDownloadDirectHtml" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer" title="Download file index.html yang sudah terhubung dengan assemblykmjc">
+          <i class="fa-solid fa-download text-amber-400"></i>
+          <span>Download index.html</span>
+        </button>
+
+        <button id="btnAddPO" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">
+          <i class="fa-solid fa-plus"></i>
+          <span>Tambah PO Baru</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PANDUAN JIKA RULES FIREBASE MASIH TERKUNCI (PERMISSION DENIED) -->
+  <div id="setupBanner" class="hidden bg-rose-950 text-rose-100 border-b border-rose-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
+      <div class="flex items-start sm:items-center gap-2.5">
+        <i class="fa-solid fa-lock text-amber-400 text-base mt-0.5 sm:mt-0"></i>
+        <div id="setupBannerText">
+          <strong>Izin Akses Realtime Database Terkunci (Permission Denied):</strong> Agar semua perangkat bisa membaca & menyimpan data ke <code>assemblykmjc-default-rtdb</code>, buka tab <strong>Rules</strong> di Firebase Realtime Database Anda dan ubah menjadi <code>".read": true, ".write": true</code> lalu klik <strong>Publish</strong>.
+        </div>
+      </div>
+      <button id="btnBannerConfig" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer">
+        Lihat Panduan Rules
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+    <!-- 1. LIMA KARTU RINGKASAN UTAMA (DASHBOARD SUMMARY) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      
+      <!-- Card 1: Total Target PO -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Target PO</span>
+          <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="text-2xl font-extrabold text-slate-900">
+            <span id="statTotalTarget">0</span> <span class="text-xs font-normal text-slate-500">pcs</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Dari <strong id="statTotalPOCount" class="text-slate-700">0</strong> Purchase Order aktif
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 2: Total Output Produksi -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Output Produksi</span>
+          <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="text-2xl font-extrabold text-blue-600">
+            <span id="statTotalOutput">0</span> <span class="text-xs font-normal text-slate-500">pcs</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
+            <span>Pencapaian Produksi:</span>
+            <span id="statOutputPct" class="font-bold text-blue-700">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Kekurangan / Balance PO -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Kekurangan (Balance)</span>
+          <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="text-2xl font-extrabold text-rose-600">
+            <span id="statTotalBalance">0</span> <span class="text-xs font-normal text-slate-500">pcs</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Sisa target yang belum selesai
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 4: Terkirim ke Finish Good (FG) -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Terkirim ke Finish Good</span>
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="fa-solid fa-truck-ramp-box"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="text-2xl font-extrabold text-emerald-600">
+            <span id="statTotalFG">0</span> <span class="text-xs font-normal text-slate-500">pcs</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
+            <span>Masuk Gudang FG:</span>
+            <span id="statFGPct" class="font-bold text-emerald-700">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: Stok Ready di Line / WIP -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Stok Ready di Line (WIP)</span>
+          <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i class="fa-solid fa-clipboard-check"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="text-2xl font-extrabold text-amber-600">
+            <span id="statReadyInLine">0</span> <span class="text-xs font-normal text-slate-500">pcs</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Selesai produksi, belum kirim FG
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 2. PANEL UTAMA: TABS, FILTER & TABEL MONITORING -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      
+      <!-- Baris Navigasi Tab -->
+      <div class="border-b border-slate-200 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-50/70">
+        <div class="flex space-x-6 overflow-x-auto">
+          <button id="tabBtnPO" class="py-4 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 whitespace-nowrap cursor-pointer">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Daftar PO & Estimasi Selesai</span>
+            <span id="badgeCountPO" class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700">0</span>
+          </button>
+
+          <button id="tabBtnLogs" class="py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 whitespace-nowrap cursor-pointer">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Riwayat Input Harian & Transfer FG</span>
+            <span id="badgeCountLogs" class="px-2 py-0.5 text-xs rounded-full bg-slate-200 text-slate-700">0</span>
+          </button>
+        </div>
+
+        <div class="pb-3 sm:pb-0 flex items-center gap-2 text-xs text-slate-400">
+          <i class="fa-solid fa-user-shield text-emerald-500"></i>
+          <span>ID Sesi:</span>
+          <code id="userSessionId" class="bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded font-mono text-[11px]">Memuat...</code>
+        </div>
+      </div>
+
+      <!-- VIEW 1: TABEL MONITORING PO -->
+      <div id="viewPO">
+        <!-- Filter & Pencarian -->
+        <div class="p-4 sm:px-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="relative flex-1 max-w-md">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-sm"></i>
+            <input
+              id="inputSearchPO"
+              type="text"
+              placeholder="Cari Nomor PO, Style / Nama Item, atau Line..."
+              class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <i class="fa-solid fa-filter text-slate-400"></i>
+              <span>Filter:</span>
+            </div>
+
+            <select id="selectFilterLine" class="text-xs sm:text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="ALL">Semua Line Produksi</option>
+            </select>
+
+            <select id="selectFilterStatus" class="text-xs sm:text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="ALL">Semua Status PO</option>
+              <option value="PROSES">Masih Proses (Ada Kekurangan)</option>
+              <option value="READY_LINE">Ada Stok Ready Belum Masuk FG</option>
+              <option value="SELESAI">Selesai Produksi (Target Terpenuhi)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Wrapper Tabel PO -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50/90 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th class="py-3.5 px-4">No. PO & Style / Line</th>
+                <th class="py-3.5 px-4 text-right">Target PO</th>
+                <th class="py-3.5 px-4 text-right">Output Harian Terakhir</th>
+                <th class="py-3.5 px-4">Total Output & Progres</th>
+                <th class="py-3.5 px-4 text-right">Kekurangan (Balance)</th>
+                <th class="py-3.5 px-4">Estimasi Selesai</th>
+                <th class="py-3.5 px-4">Transfer Finish Good (FG)</th>
+                <th class="py-3.5 px-4 text-center">Aksi Cepat</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPO" class="divide-y divide-slate-200/70 text-sm">
+              <!-- Diisi otomatis via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State PO -->
+        <div id="emptyStatePO" class="hidden p-12 text-center">
+          <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
+            <i class="fa-solid fa-box-open"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">Belum Ada Data Purchase Order (PO)</h3>
+          <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+            Klik tombol <strong>"Tambah PO Baru"</strong> untuk mulai mencatat produksi, atau klik <strong>"Muat Data Contoh"</strong> di bagian atas untuk mencoba simulasi lengkap.
+          </p>
+        </div>
+      </div>
+
+      <!-- VIEW 2: RIWAYAT LOG HARIAN & FG -->
+      <div id="viewLogs" class="hidden">
+        <div class="p-4 sm:px-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-slate-600">Filter PO:</span>
+              <select id="selectFilterLogPO" class="text-xs sm:text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="ALL">Semua Nomor PO</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-slate-600">Tanggal:</span>
+              <input id="inputFilterLogDate" type="date" class="text-xs sm:text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button id="btnResetLogDate" class="hidden text-xs text-rose-600 hover:underline cursor-pointer">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50/90 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th class="py-3 px-4">Tanggal</th>
+                <th class="py-3 px-4">No. PO & Style</th>
+                <th class="py-3 px-4">Line Produksi</th>
+                <th class="py-3 px-4 text-right">Output Harian</th>
+                <th class="py-3 px-4 text-right">Dikirim ke FG</th>
+                <th class="py-3 px-4">Catatan / No. SJ</th>
+                <th class="py-3 px-4 text-center">Hapus</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyLogs" class="divide-y divide-slate-200/70 text-sm">
+              <!-- Diisi via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyStateLogs" class="hidden p-12 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+            <i class="fa-solid fa-calendar-xmark"></i>
+          </div>
+          <h4 class="text-sm font-bold text-slate-700">Belum Ada Catatan Riwayat Harian</h4>
+          <p class="text-xs text-slate-500 mt-1">Setiap input output harian dan pengiriman ke Finish Good akan tercatat di sini.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- =========================================================================
+       MODAL 1: TAMBAH / EDIT PURCHASE ORDER (PO)
+       ========================================================================= -->
+  <div id="modalPO" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-boxes-stacked text-indigo-400"></i>
+          <h3 id="modalPOTitle" class="text-base font-bold">Tambah Purchase Order (PO) Baru</h3>
+        </div>
+        <button type="button" data-close-modal="modalPO" class="text-slate-400 hover:text-white transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formPO" class="p-6 space-y-4">
+        <input type="hidden" id="poIdInput" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Nomor PO <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poNumberInput"
+              type="text"
+              required
+              placeholder="Contoh: PO-2026-101"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Line Produksi <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poLineInput"
+              type="text"
+              required
+              placeholder="Contoh: Line A1 - Sewing"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Nama Style / Barang / Artikel <span class="text-rose-500">*</span>
+          </label>
+          <input
+            id="poStyleInput"
+            type="text"
+            required
+            placeholder="Contoh: Kemeja Tactical Ripstop Hitam"
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Total Target PO (Pcs) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poTargetQtyInput"
+              type="number"
+              min="1"
+              required
+              placeholder="2500"
+              class="w-full px-3.5 py-2 text-sm font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Target Output / Hari
+            </label>
+            <input
+              id="poDailyTargetInput"
+              type="number"
+              min="1"
+              placeholder="500"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Tanggal Mulai
+            </label>
+            <input
+              id="poStartDateInput"
+              type="date"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Catatan / Keterangan PO (Opsional)
+          </label>
+          <input
+            id="poNotesInput"
+            type="text"
+            placeholder="Contoh: Prioritas ekspor batch 1, aksesoris lengkap..."
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" data-close-modal="modalPO" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">
+            Simpan Data PO
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: INPUT OUTPUT HARIAN & TRANSFER FINISH GOOD (FG)
+       ========================================================================= -->
+  <div id="modalTransaction" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i id="modalTxIcon" class="fa-solid fa-chart-line text-blue-400"></i>
+          <h3 id="modalTxTitle" class="text-base font-bold">Input Output Produksi & Transfer FG</h3>
+        </div>
+        <button type="button" data-close-modal="modalTransaction" class="text-slate-400 hover:text-white transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formTransaction" class="p-6 space-y-4">
+        <input type="hidden" id="txPoId" />
+        <input type="hidden" id="txMode" />
+
+        <!-- Info Ringkas PO -->
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span id="txPoNumberDisplay" class="font-bold text-slate-900 text-sm">-</span>
+            <span id="txPoLineDisplay" class="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">-</span>
+          </div>
+          <div id="txPoStyleDisplay" class="text-xs font-medium text-slate-600">-</div>
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[11px]">Target PO:</span>
+              <strong id="txTargetDisplay" class="text-slate-800">0 pcs</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[11px]">Kekurangan (Balance):</span>
+              <strong id="txBalanceDisplay" class="text-rose-600">0 pcs</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[11px]">Ready di Line:</span>
+              <strong id="txReadyDisplay" class="text-amber-600">0 pcs</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Tanggal Input <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="txDateInput"
+              type="date"
+              required
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Line Produksi
+            </label>
+            <input
+              id="txLineInput"
+              type="text"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Kotak Input Output Harian -->
+          <div class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
+            <label class="flex items-center gap-1.5 text-xs font-bold uppercase text-blue-900 mb-1.5">
+              <i class="fa-solid fa-hammer text-blue-600"></i>
+              <span>Output Hari Ini (Pcs)</span>
+            </label>
+            <input
+              id="txOutputQtyInput"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="w-full px-3 py-2 text-base font-extrabold text-blue-900 bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span class="block text-[11px] text-blue-700/80 mt-1">
+              Menambah Total Output & mengurangi Kekurangan
+            </span>
+          </div>
+
+          <!-- Kotak Input Kirim Finish Good -->
+          <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+            <label class="flex items-center gap-1.5 text-xs font-bold uppercase text-emerald-900 mb-1.5">
+              <i class="fa-solid fa-truck-ramp-box text-emerald-600"></i>
+              <span>Kirim ke Finish Good (Pcs)</span>
+            </label>
+            <input
+              id="txFgQtyInput"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="w-full px-3 py-2 text-base font-extrabold text-emerald-900 bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <span class="block text-[11px] text-emerald-700/80 mt-1">
+              Barang jadi yang diserahkan ke Gudang FG
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Catatan / No. Surat Jalan FG (Opsional)
+          </label>
+          <input
+            id="txNotesInput"
+            type="text"
+            placeholder="Contoh: Shift 1 lancar / No. SJ-FG-012..."
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <!-- Riwayat Singkat PO Ini -->
+        <div>
+          <span class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Riwayat Terakhir PO Ini:</span>
+          <div id="txRecentHistory" class="max-h-28 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-slate-50 text-xs"></div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" data-close-modal="modalTransaction" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition cursor-pointer">
+            Simpan & Sinkronkan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: PENGATURAN DATABASE FIREBASE (MENDUKUNG LINK URL LANGSUNG)
+       ========================================================================= -->
+  <div id="modalDbConfig" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-xl w-full overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i>
+          <h3 class="text-base font-bold">Pengaturan Realtime Database (URL / Config)</h3>
+        </div>
+        <button type="button" data-close-modal="modalDbConfig" class="text-slate-400 hover:text-white transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs sm:text-sm text-slate-600">
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-emerald-800">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Sudah Terhubung ke Realtime Database Anda:</span>
+          </div>
+          <p class="text-xs leading-relaxed">
+            Aplikasi ini sudah diatur otomatis ke URL: <br/>
+            <code class="font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app</code>
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-amber-800">
+            <i class="fa-solid fa-key"></i>
+            <span>PENTING: Pastikan Tab "Rules" di Firebase Sudah Terbuka</span>
+          </div>
+          <p class="text-xs leading-relaxed">
+            Di halaman Firebase <strong>Realtime Database</strong> Anda (di samping tab <em>Data</em>), klik tab <strong>Rules</strong>, pastikan kodenya seperti di bawah ini, lalu klik tombol <strong>Publish</strong>:
+          </p>
+          <pre class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg font-mono text-[11px] overflow-x-auto">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</pre>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">
+            Link URL Realtime Database (Atau Objek <code>firebaseConfig</code>):
+          </label>
+          <textarea
+            id="inputFirebaseConfig"
+            rows="3"
+            placeholder="https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app/"
+            class="w-full p-3 font-mono text-xs border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app</textarea>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          <button type="button" id="btnDownloadConfiguredHtml" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition cursor-pointer" title="Unduh file index.html yang sudah tertanam URL Database Anda untuk di-upload ke GitHub">
+            <i class="fa-solid fa-download text-amber-400"></i>
+            <span>Download index.html Siap Upload GitHub</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button type="button" data-close-modal="modalDbConfig" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">Tutup</button>
+            <button type="button" id="btnSaveDbConfig" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">Simpan & Hubungkan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 4: KONFIRMASI HAPUS (TANPA ALERT BROWSER)
+       ========================================================================= -->
+  <div id="modalDeleteConfirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 text-lg">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Data</h3>
+      <p id="deleteConfirmText" class="text-sm text-slate-600 mt-1">
+        Apakah Anda yakin ingin menghapus data ini? Perubahan akan langsung tersinkronisasi ke semua perangkat.
+      </p>
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button type="button" data-close-modal="modalDeleteConfirm" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
+        <button type="button" id="btnConfirmDeleteBtn" class="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition cursor-pointer">Ya, Hapus Permanen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       SCRIPT UTAMA APLIKASI (REALTIME DATABASE DIRECT URL + LIVE SYNC)
+       ========================================================================= -->
+  <script type="module">
+    // =========================================================================
+    // 1. URL REALTIME DATABASE BAWAAN (LANGSUNG TERHUBUNG KE ASSEMBLYKMJC)
+    // =========================================================================
+    const DEFAULT_RTDB_URL = "https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+    // State Aplikasi
+    let activeDbUrl = DEFAULT_RTDB_URL;
+    let isCloudConnected = false;
+    let eventSource = null;
+    let pollTimer = null;
+    let isSaving = false;
+
+    const sessionId = 'Admin-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+    let posData = [];
+    let logsData = [];
+    let pendingDelete = { type: null, id: null, title: '' };
+
+    // =========================================================================
+    // 2. FUNGSI UTILITAS & PERHITUNGAN TANGGAL KERJA
+    // =========================================================================
+    const formatNum = (n) => new Intl.NumberFormat('id-ID').format(Number(n) || 0);
+
+    const getTodayISO = () => {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const formatDateIndo = (isoStr) => {
+      if (!isoStr) return '-';
+      const parts = isoStr.split('-');
+      if (parts.length !== 3) return isoStr;
+      const date = new Date(parts[0], parts[1] - 1, parts[2]);
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    // Hitung perkiraan tanggal selesai (Tanpa Hari Minggu)
+    const addWorkDaysNoSunday = (daysToAdd) => {
+      let current = new Date();
+      let added = 0;
+      const safeLimit = Math.min(Math.ceil(daysToAdd), 1000);
+      while (added < safeLimit) {
+        current.setDate(current.getDate() + 1);
+        if (current.getDay() !== 0) { // 0 = Minggu
+          added++;
+        }
+      }
+      return current.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const showToast = (message, type = 'success') => {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const iconClass = type === 'error'
+        ? 'fa-solid fa-circle-exclamation text-rose-400'
+        : 'fa-solid fa-circle-check text-emerald-400';
+
+      toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border bg-slate-900 text-white border-slate-700 text-xs sm:text-sm font-medium transition-all duration-300';
+      toast.innerHTML = `<i class="${iconClass} text-base shrink-0"></i><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    };
+
+    const updateSyncBadge = (status, text) => {
+      const badge = document.getElementById('syncBadge');
+      if (status === 'synced') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text || 'Live Sync Aktif (assemblykmjc)'}</span>`;
+      } else if (status === 'connecting') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i><span>${text || 'Menyinkronkan...'}</span>`;
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        badge.innerHTML = `<i class="fa-solid fa-plug-circle-xmark text-[10px]"></i><span>${text || 'Cek Pengaturan Rules Firebase'}</span>`;
+      }
+    };
+
+    // =========================================================================
+    // 3. KONEKSI LANGSUNG KE FIREBASE REALTIME DATABASE URL (TANPA RIBET)
+    // =========================================================================
+    const extractDatabaseUrl = (rawInput) => {
+      if (!rawInput || !rawInput.trim()) return null;
+      const text = rawInput.trim();
+
+      // 1. Jika user langsung memasukkan URL https://....firebasedatabase.app atau firebaseio.com
+      const urlMatch = text.match(/https:\/\/[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]*(?:firebasedatabase\.app|firebaseio\.com)/);
+      if (urlMatch) {
+        return urlMatch[0].replace(/\/+$/, '');
+      }
+
+      // 2. Jika user memasukkan objek firebaseConfig yang memiliki projectId
+      const projectMatch = text.match(/projectId\s*:\s*['"]([^'"]+)['"]/);
+      if (projectMatch && projectMatch[1]) {
+        return `https://${projectMatch[1]}-default-rtdb.asia-southeast1.firebasedatabase.app`;
+      }
+
+      return null;
+    };
+
+    const applyIncomingCloudData = (dataObj) => {
+      if (!dataObj) {
+        posData = [];
+        logsData = [];
+      } else {
+        const rawPos = dataObj.pos || [];
+        const rawLogs = dataObj.logs || [];
+        posData = Array.isArray(rawPos) ? rawPos : Object.values(rawPos);
+        logsData = Array.isArray(rawLogs) ? rawLogs : Object.values(rawLogs);
+      }
+
+      posData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      logsData.sort((a, b) => {
+        if (b.date !== a.date) return (b.date || '').localeCompare(a.date || '');
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+      renderAll();
+    };
+
+    const pushStateToCloud = async () => {
+      if (!activeDbUrl) return false;
+      isSaving = true;
+      try {
+        const endpoint = `${activeDbUrl}/prodtrack_sync.json`;
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pos: posData,
+            logs: logsData,
+            updatedAt: Date.now(),
+            updatedBy: sessionId
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        isCloudConnected = true;
+        document.getElementById('setupBanner').classList.add('hidden');
+        updateSyncBadge('synced', 'Live Sync Aktif');
+        return true;
+      } catch (err) {
+        console.error('Gagal simpan ke Realtime Database:', err);
+        isCloudConnected = false;
+        updateSyncBadge('error', 'Rules Database Terkunci');
+        document.getElementById('setupBanner').classList.remove('hidden');
+        return false;
+      } finally {
+        isSaving = false;
+      }
+    };
+
+    const fetchInitialAndSubscribe = async (dbUrlToUse) => {
+      activeDbUrl = dbUrlToUse.replace(/\/+$/, '');
+      localStorage.setItem('prodtrack_rtdb_url', activeDbUrl);
+      document.getElementById('inputFirebaseConfig').value = activeDbUrl;
+      document.getElementById('userSessionId').textContent = sessionId;
+
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+
+      updateSyncBadge('connecting', 'Menghubungkan ke assemblykmjc...');
+      const endpoint = `${activeDbUrl}/prodtrack_sync.json`;
+
+      try {
+        const res = await fetch(endpoint);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('PERMISSION_DENIED');
+        }
+        if (!res.ok) {
+          throw new Error(`HTTP_${res.status}`);
+        }
+
+        const data = await res.json();
+        isCloudConnected = true;
+        document.getElementById('setupBanner').classList.add('hidden');
+        updateSyncBadge('synced', 'Live Sync Aktif');
+
+        if (!data || (!data.pos && !data.logs)) {
+          // Jika database di Firebase masih kosong (null), otomatis isikan data contoh awal
+          await loadDemoData(true);
+        } else {
+          applyIncomingCloudData(data);
+        }
+
+        // Aktifkan Real-Time Stream (Server-Sent Events dari Firebase RTDB)
+        try {
+          eventSource = new EventSource(endpoint);
+          eventSource.addEventListener('put', (e) => {
+            if (isSaving) return;
+            try {
+              const packet = JSON.parse(e.data);
+              if (packet && packet.path === '/') {
+                applyIncomingCloudData(packet.data);
+                updateSyncBadge('synced', 'Live Sync Aktif');
+              } else {
+                // Jika perubahan parsial, ambil ulang state terbaru
+                fetch(endpoint).then((r) => r.json()).then(applyIncomingCloudData).catch(() => {});
+              }
+            } catch (_) {}
+          });
+        } catch (_) {}
+
+        // Cadangan sinkronisasi berkala setiap 4 detik agar 100% anti-putus di semua jaringan HP/Pabrik
+        pollTimer = setInterval(async () => {
+          if (isSaving) return;
+          try {
+            const pollRes = await fetch(endpoint);
+            if (pollRes.ok) {
+              const latest = await pollRes.json();
+              applyIncomingCloudData(latest);
+              if (!isCloudConnected) {
+                isCloudConnected = true;
+                document.getElementById('setupBanner').classList.add('hidden');
+                updateSyncBadge('synced', 'Live Sync Aktif');
+              }
+            }
+          } catch (_) {}
+        }, 4000);
+
+      } catch (err) {
+        console.warn('Koneksi Realtime Database memerlukan pengaturan Rules:', err);
+        isCloudConnected = false;
+        updateSyncBadge('error', 'Klik Pengaturan Database / Cek Rules');
+        document.getElementById('setupBanner').classList.remove('hidden');
+        if (posData.length === 0) {
+          loadDemoData(false);
+        }
+      }
+    };
+
+    // =========================================================================
+    // 4. KALKULASI DATA PRODUKSI, KEKURANGAN, ESTIMASI & FINISH GOOD
+    // =========================================================================
+    const getEnrichedPOs = () => {
+      return posData.map((po) => {
+        const poLogs = logsData.filter((l) => l.poId === po.id);
+        const targetQty = Number(po.targetQty) || 0;
+        const dailyTarget = Number(po.dailyTarget) || 0;
+
+        const totalOutput = poLogs.reduce((sum, l) => sum + (Number(l.outputQty) || 0), 0);
+        const totalFGSent = poLogs.reduce((sum, l) => sum + (Number(l.fgSentQty) || 0), 0);
+
+        // Kekurangan / Balance PO
+        const balance = Math.max(0, targetQty - totalOutput);
+
+        // Stok Ready di Line (Sudah selesai produksi tapi belum ditransfer ke FG)
+        const readyInLine = Math.max(0, totalOutput - totalFGSent);
+
+        // Sisa belum dikirim ke FG dari Total Target PO
+        const remainingToFG = Math.max(0, targetQty - totalFGSent);
+
+        // Output Harian Terakhir
+        const outputLogsOnly = poLogs.filter((l) => Number(l.outputQty) > 0);
+        const lastOutputLog = outputLogsOnly.length > 0 ? outputLogsOnly[0] : null;
+
+        // Hari kerja unik yang memiliki output > 0
+        const activeDaysCount = new Set(outputLogsOnly.map((l) => l.date)).size;
+        const avgActualDaily = activeDaysCount > 0 ? Math.round(totalOutput / activeDaysCount) : 0;
+
+        // Kecepatan harian untuk menghitung Estimasi Selesai (prioritaskan rata-rata aktual, jika belum ada pakai target harian)
+        const speedPerDay = avgActualDaily > 0 ? avgActualDaily : dailyTarget;
+
+        let estDaysLeft = null;
+        let estDateStr = '-';
+        if (balance === 0 && targetQty > 0) {
+          estDaysLeft = 0;
+          estDateStr = 'Selesai Produksi';
+        } else if (speedPerDay > 0) {
+          estDaysLeft = Math.ceil(balance / speedPerDay);
+          estDateStr = addWorkDaysNoSunday(estDaysLeft);
+        }
+
+        const outputPct = targetQty > 0 ? Math.min(100, Math.round((totalOutput / targetQty) * 100)) : 0;
+        const fgPct = targetQty > 0 ? Math.min(100, Math.round((totalFGSent / targetQty) * 100)) : 0;
+
+        return {
+          ...po,
+          targetQty,
+          dailyTarget,
+          totalOutput,
+          totalFGSent,
+          balance,
+          readyInLine,
+          remainingToFG,
+          lastOutputLog,
+          activeDaysCount,
+          avgActualDaily,
+          estDaysLeft,
+          estDateStr,
+          outputPct,
+          fgPct
+        };
+      });
+    };
+
+    // =========================================================================
+    // 5. RENDER SELURUH TAMPILAN DASHBOARD & TABEL
+    // =========================================================================
+    const renderAll = () => {
+      const enriched = getEnrichedPOs();
+
+      // 1. Update 5 Kartu Statistik Atas
+      const sumTarget = enriched.reduce((acc, p) => acc + p.targetQty, 0);
+      const sumOutput = enriched.reduce((acc, p) => acc + p.totalOutput, 0);
+      const sumBalance = enriched.reduce((acc, p) => acc + p.balance, 0);
+      const sumFG = enriched.reduce((acc, p) => acc + p.totalFGSent, 0);
+      const sumReady = enriched.reduce((acc, p) => acc + p.readyInLine, 0);
+
+      document.getElementById('statTotalTarget').textContent = formatNum(sumTarget);
+      document.getElementById('statTotalPOCount').textContent = formatNum(enriched.length);
+      document.getElementById('statTotalOutput').textContent = formatNum(sumOutput);
+      document.getElementById('statOutputPct').textContent = sumTarget > 0 ? `${Math.round((sumOutput / sumTarget) * 100)}%` : '0%';
+      document.getElementById('statTotalBalance').textContent = formatNum(sumBalance);
+      document.getElementById('statTotalFG').textContent = formatNum(sumFG);
+      document.getElementById('statFGPct').textContent = sumTarget > 0 ? `${Math.round((sumFG / sumTarget) * 100)}%` : '0%';
+      document.getElementById('statReadyInLine').textContent = formatNum(sumReady);
+
+      document.getElementById('badgeCountPO').textContent = enriched.length;
+      document.getElementById('badgeCountLogs').textContent = logsData.length;
+
+      // 2. Update Dropdown Filter Line & PO
+      const lineSelect = document.getElementById('selectFilterLine');
+      const currentLineVal = lineSelect.value;
+      const uniqueLines = Array.from(new Set(posData.map((p) => p.line).filter(Boolean))).sort();
+      lineSelect.innerHTML = `<option value="ALL">Semua Line Produksi</option>` +
+        uniqueLines.map((l) => `<option value="${l}">${l}</option>`).join('');
+      if (uniqueLines.includes(currentLineVal)) lineSelect.value = currentLineVal;
+
+      const logPOSelect = document.getElementById('selectFilterLogPO');
+      const currentLogPOVal = logPOSelect.value;
+      logPOSelect.innerHTML = `<option value="ALL">Semua Nomor PO</option>` +
+        posData.map((p) => `<option value="${p.id}">${p.poNumber} — ${p.styleName}</option>`).join('');
+      if (posData.some((p) => p.id === currentLogPOVal)) logPOSelect.value = currentLogPOVal;
+
+      // 3. Filter & Render Baris Tabel PO
+      const searchVal = (document.getElementById('inputSearchPO').value || '').toLowerCase();
+      const filterLineVal = lineSelect.value;
+      const filterStatusVal = document.getElementById('selectFilterStatus').value;
+
+      const filteredPOs = enriched.filter((po) => {
+        const matchSearch =
+          (po.poNumber || '').toLowerCase().includes(searchVal) ||
+          (po.styleName || '').toLowerCase().includes(searchVal) ||
+          (po.line || '').toLowerCase().includes(searchVal);
+        const matchLine = filterLineVal === 'ALL' || po.line === filterLineVal;
+
+        let matchStatus = true;
+        if (filterStatusVal === 'PROSES') matchStatus = po.balance > 0;
+        if (filterStatusVal === 'READY_LINE') matchStatus = po.readyInLine > 0;
+        if (filterStatusVal === 'SELESAI') matchStatus = po.balance === 0 && po.targetQty > 0;
+
+        return matchSearch && matchLine && matchStatus;
+      });
+
+      const tbodyPO = document.getElementById('tbodyPO');
+      const emptyPO = document.getElementById('emptyStatePO');
+
+      if (filteredPOs.length === 0) {
+        tbodyPO.innerHTML = '';
+        emptyPO.classList.remove('hidden');
+      } else {
+        emptyPO.classList.add('hidden');
+        tbodyPO.innerHTML = filteredPOs.map((po) => {
+          const lastOutHtml = po.lastOutputLog
+            ? `<div class="font-bold text-blue-600">+${formatNum(po.lastOutputLog.outputQty)} pcs</div>
+               <div class="text-[11px] text-slate-400">${formatDateIndo(po.lastOutputLog.date)}</div>`
+            : `<span class="text-xs text-slate-400 italic">Belum ada input</span>`;
+
+          const balanceHtml = po.balance > 0
+            ? `<span class="inline-block px-2.5 py-1 rounded-lg font-bold text-rose-600 bg-rose-50 border border-rose-200/70">-${formatNum(po.balance)} pcs</span>`
+            : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200"><i class="fa-solid fa-circle-check"></i> Lunas</span>`;
+
+          let estHtml = '';
+          if (po.balance === 0 && po.targetQty > 0) {
+            estHtml = `
+              <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-xs font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i>
+                <span>Produksi Selesai</span>
+              </div>`;
+          } else if (po.estDaysLeft !== null) {
+            const speedInfo = po.avgActualDaily > 0
+              ? `Rata-rata: ${formatNum(po.avgActualDaily)} pcs/hr`
+              : `Target: ${formatNum(po.dailyTarget)} pcs/hr`;
+            estHtml = `
+              <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+                <div class="text-xs font-bold text-indigo-700 flex items-center gap-1">
+                  <i class="fa-regular fa-clock"></i>
+                  <span>${po.estDaysLeft} Hari Kerja Lagi</span>
+                </div>
+                <div class="text-[11px] text-slate-600 mt-0.5">Est: <strong>${po.estDateStr}</strong></div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${speedInfo}</div>
+              </div>`;
+          } else {
+            estHtml = `<span class="text-xs text-slate-400 italic">Input output harian dulu</span>`;
+          }
+
+          return `
+            <tr class="hover:bg-slate-50/90 transition">
+              <!-- 1. PO & Style -->
+              <td class="py-4 px-4 align-top min-w-[200px]">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-slate-900 text-sm">${po.poNumber}</span>
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${po.line}</span>
+                </div>
+                <div class="text-xs font-semibold text-slate-700 mt-1">${po.styleName}</div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  Mulai: ${formatDateIndo(po.startDate)}
+                  ${po.dailyTarget ? ` • Target/hr: ${formatNum(po.dailyTarget)}` : ''}
+                </div>
+                ${po.notes ? `<div class="text-[11px] text-indigo-600/80 mt-0.5 italic">"${po.notes}"</div>` : ''}
+              </td>
+
+              <!-- 2. Target PO -->
+              <td class="py-4 px-4 align-top text-right font-extrabold text-slate-800 whitespace-nowrap">
+                ${formatNum(po.targetQty)} <span class="text-xs font-normal text-slate-400">pcs</span>
+              </td>
+
+              <!-- 3. Output Harian Terakhir -->
+              <td class="py-4 px-4 align-top text-right whitespace-nowrap">
+                ${lastOutHtml}
+              </td>
+
+              <!-- 4. Total Output & Progress -->
+              <td class="py-4 px-4 align-top min-w-[175px]">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="font-extrabold text-blue-600 text-sm">${formatNum(po.totalOutput)} pcs</span>
+                  <span class="font-bold text-slate-600">${po.outputPct}%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full ${po.outputPct >= 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width: ${po.outputPct}%"></div>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  ${po.activeDaysCount} hari kerja tercatat
+                </div>
+              </td>
+
+              <!-- 5. Kekurangan / Balance -->
+              <td class="py-4 px-4 align-top text-right whitespace-nowrap">
+                ${balanceHtml}
+              </td>
+
+              <!-- 6. Estimasi Selesai -->
+              <td class="py-4 px-4 align-top min-w-[175px]">
+                ${estHtml}
+              </td>
+
+              <!-- 7. Transfer Finish Good -->
+              <td class="py-4 px-4 align-top min-w-[210px]">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-slate-500">Terkirim FG:</span>
+                  <span class="font-extrabold text-emerald-600 text-sm">${formatNum(po.totalFGSent)} pcs (${po.fgPct}%)</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+                  <div class="h-full bg-emerald-500 rounded-full" style="width: ${po.fgPct}%"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <div class="px-2 py-1 rounded bg-amber-50 border border-amber-200/70 text-amber-900">
+                    <span class="block text-[10px] text-amber-600">Ready di Line:</span>
+                    <strong>${formatNum(po.readyInLine)} pcs</strong>
+                  </div>
+                  <div class="px-2 py-1 rounded bg-slate-50 border border-slate-200/70 text-slate-700">
+                    <span class="block text-[10px] text-slate-400">Sisa Kirim FG:</span>
+                    <strong>${formatNum(po.remainingToFG)} pcs</strong>
+                  </div>
+                </div>
+              </td>
+
+              <!-- 8. Tombol Aksi Cepat -->
+              <td class="py-4 px-4 align-top text-center whitespace-nowrap">
+                <div class="flex flex-col gap-1.5">
+                  <button
+                    data-action="open-tx"
+                    data-mode="output"
+                    data-id="${po.id}"
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition cursor-pointer"
+                  >
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Input Output Harian</span>
+                  </button>
+
+                  <button
+                    data-action="open-tx"
+                    data-mode="fg"
+                    data-id="${po.id}"
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer"
+                  >
+                    <i class="fa-solid fa-truck-fast text-[10px]"></i>
+                    <span>Transfer ke FG</span>
+                  </button>
+
+                  <div class="flex items-center justify-center gap-1 pt-0.5">
+                    <button
+                      data-action="edit-po"
+                      data-id="${po.id}"
+                      class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                      title="Edit PO"
+                    >
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button
+                      data-action="delete-po"
+                      data-id="${po.id}"
+                      data-title="${po.poNumber}"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                      title="Hapus PO"
+                    >
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 4. Filter & Render Tabel Riwayat Log
+      const filterLogPOVal = logPOSelect.value;
+      const filterLogDateVal = document.getElementById('inputFilterLogDate').value;
+      const btnResetDate = document.getElementById('btnResetLogDate');
+      if (filterLogDateVal) btnResetDate.classList.remove('hidden');
+      else btnResetDate.classList.add('hidden');
+
+      const filteredLogs = logsData.filter((l) => {
+        const matchPO = filterLogPOVal === 'ALL' || l.poId === filterLogPOVal;
+        const matchDate = !filterLogDateVal || l.date === filterLogDateVal;
+        return matchPO && matchDate;
+      });
+
+      const tbodyLogs = document.getElementById('tbodyLogs');
+      const emptyLogs = document.getElementById('emptyStateLogs');
+
+      if (filteredLogs.length === 0) {
+        tbodyLogs.innerHTML = '';
+        emptyLogs.classList.remove('hidden');
+      } else {
+        emptyLogs.classList.add('hidden');
+        tbodyLogs.innerHTML = filteredLogs.map((l) => {
+          const parentPO = posData.find((p) => p.id === l.poId);
+          const poNum = parentPO ? parentPO.poNumber : (l.poNumberBackup || 'PO Terhapus');
+          const styleName = parentPO ? parentPO.styleName : (l.styleNameBackup || '-');
+
+          return `
+            <tr class="hover:bg-slate-50/90 transition">
+              <td class="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">${formatDateIndo(l.date)}</td>
+              <td class="py-3 px-4">
+                <div class="font-bold text-slate-900">${poNum}</div>
+                <div class="text-xs text-slate-500">${styleName}</div>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">${l.line || '-'}</span>
+              </td>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                ${Number(l.outputQty) > 0
+                  ? `<span class="font-bold text-blue-600">+${formatNum(l.outputQty)} pcs</span>`
+                  : `<span class="text-slate-300">-</span>`}
+              </td>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                ${Number(l.fgSentQty) > 0
+                  ? `<span class="font-bold text-emerald-600">+${formatNum(l.fgSentQty)} pcs</span>`
+                  : `<span class="text-slate-300">-</span>`}
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-600">${l.notes || '<span class="text-slate-300 italic">-</span>'}</td>
+              <td class="py-3 px-4 text-center">
+                <button
+                  data-action="delete-log"
+                  data-id="${l.id}"
+                  data-title="${poNum} (${formatDateIndo(l.date)})"
+                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                  title="Hapus Catatan Ini"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    };
+
+    // =========================================================================
+    // 6. OPERASI TAMBAH, EDIT, HAPUS (LANGSUNG SINKRON KE REALTIME DATABASE)
+    // =========================================================================
+    const savePOData = async (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('poIdInput').value;
+      const payload = {
+        poNumber: document.getElementById('poNumberInput').value.trim(),
+        line: document.getElementById('poLineInput').value.trim(),
+        styleName: document.getElementById('poStyleInput').value.trim(),
+        targetQty: Number(document.getElementById('poTargetQtyInput').value) || 0,
+        dailyTarget: Number(document.getElementById('poDailyTargetInput').value) || 0,
+        startDate: document.getElementById('poStartDateInput').value,
+        notes: document.getElementById('poNotesInput').value.trim(),
+        updatedAt: Date.now()
+      };
+
+      if (editId) {
+        posData = posData.map((p) => (p.id === editId ? { ...p, ...payload } : p));
+      } else {
+        posData.unshift({
+          id: 'po-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+          ...payload,
+          createdAt: Date.now(),
+          createdBy: sessionId
+        });
+      }
+
+      renderAll();
+      document.getElementById('modalPO').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast(`PO ${payload.poNumber} tersimpan & disinkronkan ke semua perangkat!`);
+      } else {
+        showToast(`PO ${payload.poNumber} disimpan secara lokal (buka Rules Firebase untuk sinkronisasi).`, 'error');
+      }
+    };
+
+    const openTransactionModal = (poId, mode) => {
+      const enriched = getEnrichedPOs();
+      const po = enriched.find((p) => p.id === poId);
+      if (!po) return;
+
+      document.getElementById('txPoId').value = po.id;
+      document.getElementById('txMode').value = mode;
+      document.getElementById('txPoNumberDisplay').textContent = po.poNumber;
+      document.getElementById('txPoLineDisplay').textContent = po.line;
+      document.getElementById('txPoStyleDisplay').textContent = po.styleName;
+      document.getElementById('txTargetDisplay').textContent = `${formatNum(po.targetQty)} pcs`;
+      document.getElementById('txBalanceDisplay').textContent = `${formatNum(po.balance)} pcs`;
+      document.getElementById('txReadyDisplay').textContent = `${formatNum(po.readyInLine)} pcs`;
+
+      document.getElementById('txDateInput').value = getTodayISO();
+      document.getElementById('txLineInput').value = po.line;
+      document.getElementById('txOutputQtyInput').value = '';
+      document.getElementById('txFgQtyInput').value = '';
+      document.getElementById('txNotesInput').value = '';
+
+      const titleEl = document.getElementById('modalTxTitle');
+      const iconEl = document.getElementById('modalTxIcon');
+      if (mode === 'fg') {
+        titleEl.textContent = `Transfer Barang ke Finish Good (${po.poNumber})`;
+        iconEl.className = 'fa-solid fa-truck-fast text-emerald-400';
+        setTimeout(() => document.getElementById('txFgQtyInput').focus(), 100);
+      } else {
+        titleEl.textContent = `Input Output Produksi Harian (${po.poNumber})`;
+        iconEl.className = 'fa-solid fa-chart-line text-blue-400';
+        setTimeout(() => document.getElementById('txOutputQtyInput').focus(), 100);
+      }
+
+      // Tampilkan 3 riwayat terakhir PO ini
+      const poLogs = logsData.filter((l) => l.poId === po.id).slice(0, 4);
+      const historyBox = document.getElementById('txRecentHistory');
+      if (poLogs.length === 0) {
+        historyBox.innerHTML = `<div class="p-2.5 text-center text-slate-400 italic">Belum ada riwayat untuk PO ini</div>`;
+      } else {
+        historyBox.innerHTML = poLogs.map((l) => `
+          <div class="px-3 py-2 flex items-center justify-between">
+            <div>
+              <span class="font-semibold text-slate-700">${formatDateIndo(l.date)}</span>
+              <span class="text-slate-400 ml-1">${l.notes ? `• ${l.notes}` : ''}</span>
+            </div>
+            <div class="flex items-center gap-2 font-bold">
+              ${Number(l.outputQty) > 0 ? `<span class="text-blue-600">Out: +${formatNum(l.outputQty)}</span>` : ''}
+              ${Number(l.fgSentQty) > 0 ? `<span class="text-emerald-600">FG: +${formatNum(l.fgSentQty)}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('modalTransaction').classList.remove('hidden');
+    };
+
+    const saveTransactionData = async (e) => {
+      e.preventDefault();
+      const poId = document.getElementById('txPoId').value;
+      const outQty = Number(document.getElementById('txOutputQtyInput').value) || 0;
+      const fgQty = Number(document.getElementById('txFgQtyInput').value) || 0;
+
+      if (outQty <= 0 && fgQty <= 0) {
+        showToast('Masukkan jumlah Output Harian atau jumlah Kirim ke FG minimal 1 pcs.', 'error');
+        return;
+      }
+
+      const parentPO = posData.find((p) => p.id === poId);
+      const payload = {
+        id: 'log-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        poId,
+        poNumberBackup: parentPO ? parentPO.poNumber : '',
+        styleNameBackup: parentPO ? parentPO.styleName : '',
+        date: document.getElementById('txDateInput').value,
+        line: document.getElementById('txLineInput').value.trim(),
+        outputQty: outQty,
+        fgSentQty: fgQty,
+        notes: document.getElementById('txNotesInput').value.trim(),
+        createdAt: Date.now(),
+        createdBy: sessionId
+      };
+
+      logsData.unshift(payload);
+      renderAll();
+      document.getElementById('modalTransaction').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast('Progres harian berhasil disimpan & tersinkronisasi ke semua perangkat!');
+      } else {
+        showToast('Progres disimpan secara lokal (pastikan Rules Firebase sudah true).', 'error');
+      }
+    };
+
+    const executeConfirmedDelete = async () => {
+      if (!pendingDelete.id) return;
+      if (pendingDelete.type === 'po') {
+        posData = posData.filter((p) => p.id !== pendingDelete.id);
+        logsData = logsData.filter((l) => l.poId !== pendingDelete.id);
+      } else {
+        logsData = logsData.filter((l) => l.id !== pendingDelete.id);
+      }
+      renderAll();
+      document.getElementById('modalDeleteConfirm').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast(`Data ${pendingDelete.title} berhasil dihapus di semua perangkat.`);
+      } else {
+        showToast(`Data ${pendingDelete.title} dihapus.`);
+      }
+    };
+
+    // =========================================================================
+    // 7. FITUR MUAT DATA CONTOH & EXPORT CSV/EXCEL
+    // =========================================================================
+    const loadDemoData = async (syncToCloud = true) => {
+      const today = new Date();
+      const pastISO = (daysAgo) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - daysAgo);
+        return d.toISOString().split('T')[0];
+      };
+
+      const now = Date.now();
+      const po1Id = 'po-demo-101';
+      const po2Id = 'po-demo-102';
+      const po3Id = 'po-demo-105';
+
+      posData = [
+        {
+          id: po1Id,
+          poNumber: 'PO-2026-101',
+          styleName: 'Kemeja Tactical Ripstop Hitam',
+          line: 'Line A1 - Sewing',
+          targetQty: 2500,
+          dailyTarget: 500,
+          startDate: pastISO(4),
+          notes: 'Prioritas Ekspor Batch 1',
+          createdAt: now - 300000
+        },
+        {
+          id: po2Id,
+          poNumber: 'PO-2026-102',
+          styleName: 'Celana Cargo Chino Cream',
+          line: 'Line B2 - Sewing',
+          targetQty: 1800,
+          dailyTarget: 450,
+          startDate: pastISO(3),
+          notes: 'Aksesoris kancing lengkap',
+          createdAt: now - 200000
+        },
+        {
+          id: po3Id,
+          poNumber: 'PO-2026-105',
+          styleName: 'Jaket Parka Waterproof Navy',
+          line: 'Line C1 - Jacket',
+          targetQty: 1200,
+          dailyTarget: 300,
+          startDate: pastISO(2),
+          notes: 'QC ketat bagian seam seal',
+          createdAt: now - 100000
+        }
+      ];
+
+      logsData = [
+        {
+          id: 'log-demo-1',
+          poId: po1Id,
+          poNumberBackup: 'PO-2026-101',
+          styleNameBackup: 'Kemeja Tactical Ripstop Hitam',
+          date: pastISO(2),
+          line: 'Line A1 - Sewing',
+          outputQty: 520,
+          fgSentQty: 450,
+          notes: 'Hari ke-1 lancar',
+          createdAt: now - 200000
+        },
+        {
+          id: 'log-demo-2',
+          poId: po1Id,
+          poNumberBackup: 'PO-2026-101',
+          styleNameBackup: 'Kemeja Tactical Ripstop Hitam',
+          date: pastISO(1),
+          line: 'Line A1 - Sewing',
+          outputQty: 540,
+          fgSentQty: 500,
+          notes: 'SJ-FG-0012 diserahkan ke gudang FG',
+          createdAt: now - 100000
+        },
+        {
+          id: 'log-demo-3',
+          poId: po2Id,
+          poNumberBackup: 'PO-2026-102',
+          styleNameBackup: 'Celana Cargo Chino Cream',
+          date: pastISO(1),
+          line: 'Line B2 - Sewing',
+          outputQty: 600,
+          fgSentQty: 500,
+          notes: 'Sisa 100 pcs tunggu packing',
+          createdAt: now - 90000
+        },
+        {
+          id: 'log-demo-4',
+          poId: po3Id,
+          poNumberBackup: 'PO-2026-105',
+          styleNameBackup: 'Jaket Parka Waterproof Navy',
+          date: pastISO(1),
+          line: 'Line C1 - Jacket',
+          outputQty: 310,
+          fgSentQty: 300,
+          notes: 'Transfer FG tahap 1',
+          createdAt: now - 50000
+        }
+      ];
+
+      renderAll();
+      if (syncToCloud) {
+        const ok = await pushStateToCloud();
+        if (ok) showToast('Data contoh berhasil dimuat & disinkronkan ke Cloud!');
+      }
+    };
+
+    const exportToCSV = () => {
+      const enriched = getEnrichedPOs();
+      if (enriched.length === 0) {
+        showToast('Belum ada data PO untuk di-export.', 'error');
+        return;
+      }
+
+      const headers = [
+        'Nomor PO',
+        'Style / Nama Barang',
+        'Line Produksi',
+        'Tanggal Mulai',
+        'Target PO (Pcs)',
+        'Total Output (Pcs)',
+        'Persentase Output (%)',
+        'Kekurangan / Balance (Pcs)',
+        'Rata-Rata Output Harian (Pcs)',
+        'Estimasi Selesai',
+        'Sudah Dikirim ke FG (Pcs)',
+        'Stok Ready di Line (Pcs)',
+        'Sisa Belum Kirim FG (Pcs)'
+      ];
+
+      const rows = enriched.map((p) => [
+        `"${p.poNumber}"`,
+        `"${(p.styleName || '').replace(/"/g, '""')}"`,
+        `"${p.line}"`,
+        p.startDate,
+        p.targetQty,
+        p.totalOutput,
+        p.outputPct,
+        p.balance,
+        p.avgActualDaily || p.dailyTarget,
+        `"${p.estDateStr}"`,
+        p.totalFGSent,
+        p.readyInLine,
+        p.remainingToFG
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Laporan_Monitoring_Produksi_FG_${getTodayISO()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Laporan CSV/Excel berhasil diunduh!');
+    };
+
+    // =========================================================================
+    // 8. EVENT LISTENERS & INISIALISASI HALAMAN
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Tab Switching
+      const tabBtnPO = document.getElementById('tabBtnPO');
+      const tabBtnLogs = document.getElementById('tabBtnLogs');
+      const viewPO = document.getElementById('viewPO');
+      const viewLogs = document.getElementById('viewLogs');
+
+      tabBtnPO.addEventListener('click', () => {
+        tabBtnPO.className = 'py-4 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 whitespace-nowrap cursor-pointer';
+        tabBtnLogs.className = 'py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 whitespace-nowrap cursor-pointer';
+        viewPO.classList.remove('hidden');
+        viewLogs.classList.add('hidden');
+      });
+
+      tabBtnLogs.addEventListener('click', () => {
+        tabBtnLogs.className = 'py-4 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 whitespace-nowrap cursor-pointer';
+        tabBtnPO.className = 'py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 whitespace-nowrap cursor-pointer';
+        viewLogs.classList.remove('hidden');
+        viewPO.classList.add('hidden');
+      });
+
+      // Buka Modal Tambah PO Baru
+      document.getElementById('btnAddPO').addEventListener('click', () => {
+        document.getElementById('modalPOTitle').textContent = 'Tambah Purchase Order (PO) Baru';
+        document.getElementById('poIdInput').value = '';
+        document.getElementById('poNumberInput').value = '';
+        document.getElementById('poLineInput').value = '';
+        document.getElementById('poStyleInput').value = '';
+        document.getElementById('poTargetQtyInput').value = '';
+        document.getElementById('poDailyTargetInput').value = '';
+        document.getElementById('poStartDateInput').value = getTodayISO();
+        document.getElementById('poNotesInput').value = '';
+        document.getElementById('modalPO').classList.remove('hidden');
+      });
+
+      // Tutup Semua Modal dengan atribut data-close-modal
+      document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-close-modal');
+          document.getElementById(target).classList.add('hidden');
+        });
+      });
+
+      // Submit Form PO & Form Transaksi
+      document.getElementById('formPO').addEventListener('submit', savePOData);
+      document.getElementById('formTransaction').addEventListener('submit', saveTransactionData);
+      document.getElementById('btnConfirmDeleteBtn').addEventListener('click', executeConfirmedDelete);
+
+      // Event Delegation untuk Tombol Aksi di Tabel PO dan Log
+      document.getElementById('tbodyPO').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+
+        if (action === 'open-tx') {
+          openTransactionModal(id, btn.getAttribute('data-mode'));
+        } else if (action === 'edit-po') {
+          const po = posData.find((p) => p.id === id);
+          if (!po) return;
+          document.getElementById('modalPOTitle').textContent = `Edit Data PO (${po.poNumber})`;
+          document.getElementById('poIdInput').value = po.id;
+          document.getElementById('poNumberInput').value = po.poNumber || '';
+          document.getElementById('poLineInput').value = po.line || '';
+          document.getElementById('poStyleInput').value = po.styleName || '';
+          document.getElementById('poTargetQtyInput').value = po.targetQty || '';
+          document.getElementById('poDailyTargetInput').value = po.dailyTarget || '';
+          document.getElementById('poStartDateInput').value = po.startDate || getTodayISO();
+          document.getElementById('poNotesInput').value = po.notes || '';
+          document.getElementById('modalPO').classList.remove('hidden');
+        } else if (action === 'delete-po') {
+          pendingDelete = { type: 'po', id, title: btn.getAttribute('data-title') };
+          document.getElementById('deleteConfirmText').innerHTML =
+            `Apakah Anda yakin ingin menghapus <strong>${pendingDelete.title}</strong> beserta seluruh riwayat output hariannya?`;
+          document.getElementById('modalDeleteConfirm').classList.remove('hidden');
+        }
+      });
+
+      document.getElementById('tbodyLogs').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action="delete-log"]');
+        if (!btn) return;
+        pendingDelete = {
+          type: 'log',
+          id: btn.getAttribute('data-id'),
+          title: btn.getAttribute('data-title')
+        };
+        document.getElementById('deleteConfirmText').innerHTML =
+          `Hapus catatan riwayat <strong>${pendingDelete.title}</strong>? Perhitungan saldo PO dan FG akan otomatis disesuaikan.`;
+        document.getElementById('modalDeleteConfirm').classList.remove('hidden');
+      });
+
+      // Filter & Search Listeners
+      document.getElementById('inputSearchPO').addEventListener('input', renderAll);
+      document.getElementById('selectFilterLine').addEventListener('change', renderAll);
+      document.getElementById('selectFilterStatus').addEventListener('change', renderAll);
+      document.getElementById('selectFilterLogPO').addEventListener('change', renderAll);
+      document.getElementById('inputFilterLogDate').addEventListener('change', renderAll);
+      document.getElementById('btnResetLogDate').addEventListener('click', () => {
+        document.getElementById('inputFilterLogDate').value = '';
+        renderAll();
+      });
+
+      // Tombol Demo & Export
+      document.getElementById('btnLoadDemo').addEventListener('click', () => loadDemoData(true));
+      document.getElementById('btnExportCSV').addEventListener('click', exportToCSV);
+
+      // Modal Pengaturan Database (Mendukung URL Realtime Database langsung)
+      const openConfigModal = () => {
+        document.getElementById('inputFirebaseConfig').value = activeDbUrl || DEFAULT_RTDB_URL;
+        document.getElementById('modalDbConfig').classList.remove('hidden');
+      };
+      document.getElementById('btnOpenDbConfig').addEventListener('click', openConfigModal);
+      document.getElementById('btnBannerConfig').addEventListener('click', openConfigModal);
+
+      document.getElementById('btnSaveDbConfig').addEventListener('click', () => {
+        const raw = document.getElementById('inputFirebaseConfig').value;
+        const extractedUrl = extractDatabaseUrl(raw);
+        if (!extractedUrl) {
+          showToast('Masukkan link URL Realtime Database yang valid (contoh: https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app)', 'error');
+          return;
+        }
+        document.getElementById('modalDbConfig').classList.add('hidden');
+        fetchInitialAndSubscribe(extractedUrl);
+        showToast('Menghubungkan ke Realtime Database Anda...');
+      });
+
+      // Fungsi Download File index.html Siap Upload GitHub
+      const downloadReadyHtml = () => {
+        const raw = document.getElementById('inputFirebaseConfig').value;
+        const targetUrl = extractDatabaseUrl(raw) || activeDbUrl || DEFAULT_RTDB_URL;
+
+        const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML.replace(
+          /const DEFAULT_RTDB_URL = ["'][^"']*["'];/,
+          `const DEFAULT_RTDB_URL = "${targetUrl}";`
+        );
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('File index.html siap upload ke GitHub berhasil diunduh!');
+      };
+
+      document.getElementById('btnDownloadConfiguredHtml').addEventListener('click', downloadReadyHtml);
+      document.getElementById('btnDownloadDirectHtml').addEventListener('click', downloadReadyHtml);
+
+      // Otomatis terhubung ke database assemblykmjc saat halaman dibuka
+      const savedUrl = localStorage.getItem('prodtrack_rtdb_url') || DEFAULT_RTDB_URL;
+      fetchInitialAndSubscribe(savedUrl);
+    });
+  </script>
+</body>
+</html>
