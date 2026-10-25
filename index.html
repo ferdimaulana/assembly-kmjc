@@ -70,7 +70,7 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
-        <button id="btnOpenDbConfig" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="Atur koneksi Firebase agar sinkron di semua HP/Laptop">
+        <button id="btnOpenDbConfig" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="Atur koneksi Firebase Realtime Database agar sinkron di semua HP/Laptop">
           <i class="fa-solid fa-database text-indigo-400"></i>
           <span>Pengaturan Database</span>
         </button>
@@ -85,6 +85,11 @@
           <span>Export Excel/CSV</span>
         </button>
 
+        <button id="btnDownloadDirectHtml" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer" title="Download file index.html yang sudah terhubung dengan assemblykmjc">
+          <i class="fa-solid fa-download text-amber-400"></i>
+          <span>Download index.html</span>
+        </button>
+
         <button id="btnAddPO" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">
           <i class="fa-solid fa-plus"></i>
           <span>Tambah PO Baru</span>
@@ -93,17 +98,17 @@
     </div>
   </header>
 
-  <!-- PANDUAN SINGKAT KONEKSI CLOUD (MUNCUL JIKA BELUM ADA FIREBASE CONFIG DI VERCEL/GITHUB) -->
-  <div id="setupBanner" class="hidden bg-indigo-950 text-indigo-100 border-b border-indigo-800">
+  <!-- PANDUAN JIKA RULES FIREBASE MASIH TERKUNCI (PERMISSION DENIED) -->
+  <div id="setupBanner" class="hidden bg-rose-950 text-rose-100 border-b border-rose-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
       <div class="flex items-start sm:items-center gap-2.5">
-        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 sm:mt-0"></i>
-        <div>
-          <strong>Database Cloud Belum Terhubung:</strong> Saat ini aplikasi berjalan dalam <em>Mode Pratinjau</em>. Agar data tersinkronisasi <strong>real-time di semua HP & Laptop</strong> saat di-hosting di Vercel/GitHub, silakan masukkan konfigurasi Firebase Anda.
+        <i class="fa-solid fa-lock text-amber-400 text-base mt-0.5 sm:mt-0"></i>
+        <div id="setupBannerText">
+          <strong>Izin Akses Realtime Database Terkunci (Permission Denied):</strong> Agar semua perangkat bisa membaca & menyimpan data ke <code>assemblykmjc-default-rtdb</code>, buka tab <strong>Rules</strong> di Firebase Realtime Database Anda dan ubah menjadi <code>".read": true, ".write": true</code> lalu klik <strong>Publish</strong>.
         </div>
       </div>
-      <button id="btnBannerConfig" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer">
-        Hubungkan Firebase Sekarang
+      <button id="btnBannerConfig" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer">
+        Lihat Panduan Rules
       </button>
     </div>
   </div>
@@ -351,7 +356,7 @@
   </main>
 
   <!-- =========================================================================
-       MODAL 1: TAMBAH / EDIT PO BARU
+       MODAL 1: TAMBAH / EDIT PURCHASE ORDER (PO)
        ========================================================================= -->
   <div id="modalPO" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
@@ -370,57 +375,118 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nomor PO <span class="text-rose-500">*</span></label>
-            <input type="text" id="poNumberInput" required placeholder="Contoh: PO-2026-001" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Nomor PO <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poNumberInput"
+              type="text"
+              required
+              placeholder="Contoh: PO-2026-101"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
+
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Line Produksi <span class="text-rose-500">*</span></label>
-            <input type="text" id="poLineInput" required placeholder="Contoh: Line A1 - Sewing" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Line Produksi <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poLineInput"
+              type="text"
+              required
+              placeholder="Contoh: Line A1 - Sewing"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Style / Nama Barang <span class="text-rose-500">*</span></label>
-          <input type="text" id="poStyleInput" required placeholder="Contoh: Kemeja Tactical Ripstop Hitam" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Nama Style / Barang / Artikel <span class="text-rose-500">*</span>
+          </label>
+          <input
+            id="poStyleInput"
+            type="text"
+            required
+            placeholder="Contoh: Kemeja Tactical Ripstop Hitam"
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Target Qty PO <span class="text-rose-500">*</span></label>
-            <input type="number" id="poTargetQtyInput" min="1" required placeholder="2500" class="w-full px-3.5 py-2 text-sm font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Total Target PO (Pcs) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="poTargetQtyInput"
+              type="number"
+              min="1"
+              required
+              placeholder="2500"
+              class="w-full px-3.5 py-2 text-sm font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
+
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1" title="Dipakai untuk menghitung estimasi selesai jika belum ada riwayat aktual">Target Harian (Pcs) <span class="text-rose-500">*</span></label>
-            <input type="number" id="poDailyTargetInput" min="1" required placeholder="500" class="w-full px-3.5 py-2 text-sm font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Target Output / Hari
+            </label>
+            <input
+              id="poDailyTargetInput"
+              type="number"
+              min="1"
+              placeholder="500"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
+
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tanggal Mulai</label>
-            <input type="date" id="poStartDateInput" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Tanggal Mulai
+            </label>
+            <input
+              id="poStartDateInput"
+              type="date"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Catatan Tambahan (Opsional)</label>
-          <input type="text" id="poNotesInput" placeholder="Contoh: Prioritas Ekspor Batch 1..." class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Catatan / Keterangan PO (Opsional)
+          </label>
+          <input
+            id="poNotesInput"
+            type="text"
+            placeholder="Contoh: Prioritas ekspor batch 1, aksesoris lengkap..."
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
 
         <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-          <button type="button" data-close-modal="modalPO" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
-          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">Simpan Data PO</button>
+          <button type="button" data-close-modal="modalPO" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">
+            Simpan Data PO
+          </button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- =========================================================================
-       MODAL 2: INPUT OUTPUT HARIAN / TRANSFER KE FINISH GOOD (FG)
+       MODAL 2: INPUT OUTPUT HARIAN & TRANSFER FINISH GOOD (FG)
        ========================================================================= -->
   <div id="modalTransaction" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
-      <div id="modalTxHeader" class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <i id="modalTxIcon" class="fa-solid fa-chart-line text-blue-400"></i>
-          <h3 id="modalTxTitle" class="text-base font-bold">Input Output Produksi Harian</h3>
+          <h3 id="modalTxTitle" class="text-base font-bold">Input Output Produksi & Transfer FG</h3>
         </div>
         <button type="button" data-close-modal="modalTransaction" class="text-slate-400 hover:text-white transition cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -431,25 +497,24 @@
         <input type="hidden" id="txPoId" />
         <input type="hidden" id="txMode" />
 
-        <!-- Ringkasan PO Terpilih -->
-        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+        <!-- Info Ringkas PO -->
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
           <div class="flex items-center justify-between">
             <span id="txPoNumberDisplay" class="font-bold text-slate-900 text-sm">-</span>
-            <span id="txPoLineDisplay" class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 text-slate-700">-</span>
+            <span id="txPoLineDisplay" class="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">-</span>
           </div>
-          <div id="txPoStyleDisplay" class="text-xs text-slate-600 mt-0.5">-</div>
-
-          <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-200/80 text-xs">
+          <div id="txPoStyleDisplay" class="text-xs font-medium text-slate-600">-</div>
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 text-xs">
             <div>
-              <span class="text-slate-400 block">Target PO:</span>
+              <span class="text-slate-400 block text-[11px]">Target PO:</span>
               <strong id="txTargetDisplay" class="text-slate-800">0 pcs</strong>
             </div>
             <div>
-              <span class="text-slate-400 block">Sisa Kekurangan:</span>
+              <span class="text-slate-400 block text-[11px]">Kekurangan (Balance):</span>
               <strong id="txBalanceDisplay" class="text-rose-600">0 pcs</strong>
             </div>
             <div>
-              <span class="text-slate-400 block">Stok Ready Line:</span>
+              <span class="text-slate-400 block text-[11px]">Ready di Line:</span>
               <strong id="txReadyDisplay" class="text-amber-600">0 pcs</strong>
             </div>
           </div>
@@ -457,66 +522,106 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tanggal <span class="text-rose-500">*</span></label>
-            <input type="date" id="txDateInput" required class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Tanggal Input <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="txDateInput"
+              type="date"
+              required
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
+
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Line Produksi</label>
-            <input type="text" id="txLineInput" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+              Line Produksi
+            </label>
+            <input
+              id="txLineInput"
+              type="text"
+              class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
         </div>
 
-        <!-- Kotak Input Jumlah Output & FG -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div id="boxInputOutput" class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
+          <!-- Kotak Input Output Harian -->
+          <div class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
             <label class="flex items-center gap-1.5 text-xs font-bold uppercase text-blue-900 mb-1.5">
               <i class="fa-solid fa-hammer text-blue-600"></i>
-              <span>Tambah Output (Pcs)</span>
+              <span>Output Hari Ini (Pcs)</span>
             </label>
-            <input type="number" id="txOutputQtyInput" min="0" placeholder="0" class="w-full px-3 py-2 text-base font-extrabold text-blue-900 bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <span class="block text-[11px] text-blue-700/80 mt-1">Hasil produksi selesai hari ini</span>
+            <input
+              id="txOutputQtyInput"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="w-full px-3 py-2 text-base font-extrabold text-blue-900 bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span class="block text-[11px] text-blue-700/80 mt-1">
+              Menambah Total Output & mengurangi Kekurangan
+            </span>
           </div>
 
-          <div id="boxInputFG" class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+          <!-- Kotak Input Kirim Finish Good -->
+          <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
             <label class="flex items-center gap-1.5 text-xs font-bold uppercase text-emerald-900 mb-1.5">
-              <i class="fa-solid fa-truck-fast text-emerald-600"></i>
-              <span>Kirim ke FG (Pcs)</span>
+              <i class="fa-solid fa-truck-ramp-box text-emerald-600"></i>
+              <span>Kirim ke Finish Good (Pcs)</span>
             </label>
-            <input type="number" id="txFgQtyInput" min="0" placeholder="0" class="w-full px-3 py-2 text-base font-extrabold text-emerald-900 bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <span class="block text-[11px] text-emerald-700/80 mt-1">Diserahkan ke gudang Finish Good</span>
+            <input
+              id="txFgQtyInput"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="w-full px-3 py-2 text-base font-extrabold text-emerald-900 bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <span class="block text-[11px] text-emerald-700/80 mt-1">
+              Barang jadi yang diserahkan ke Gudang FG
+            </span>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Catatan / Keterangan / No. Surat Jalan FG</label>
-          <input type="text" id="txNotesInput" placeholder="Contoh: Shift 1 lancar / No. SJ: FG-0192..." class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Catatan / No. Surat Jalan FG (Opsional)
+          </label>
+          <input
+            id="txNotesInput"
+            type="text"
+            placeholder="Contoh: Shift 1 lancar / No. SJ-FG-012..."
+            class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
 
-        <!-- Mini Riwayat 3 Transaksi Terakhir PO Ini -->
-        <div class="pt-2">
-          <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Riwayat Terakhir PO Ini:</span>
-          <div id="txRecentHistory" class="max-h-28 overflow-y-auto divide-y divide-slate-100 border border-slate-200/80 rounded-lg bg-slate-50/50 text-xs">
-            <!-- Diisi via JS -->
-          </div>
+        <!-- Riwayat Singkat PO Ini -->
+        <div>
+          <span class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Riwayat Terakhir PO Ini:</span>
+          <div id="txRecentHistory" class="max-h-28 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-slate-50 text-xs"></div>
         </div>
 
         <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-          <button type="button" data-close-modal="modalTransaction" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
-          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition cursor-pointer">Simpan & Sinkronkan</button>
+          <button type="button" data-close-modal="modalTransaction" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition cursor-pointer">
+            Simpan & Sinkronkan
+          </button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- =========================================================================
-       MODAL 3: PENGATURAN DATABASE FIREBASE (UNTUK DEPLOY GITHUB & VERCEL)
+       MODAL 3: PENGATURAN DATABASE FIREBASE (MENDUKUNG LINK URL LANGSUNG)
        ========================================================================= -->
   <div id="modalDbConfig" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-xl w-full overflow-hidden">
       <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i>
-          <h3 class="text-base font-bold">Pengaturan Database Real-Time (Firebase Config)</h3>
+          <h3 class="text-base font-bold">Pengaturan Realtime Database (URL / Config)</h3>
         </div>
         <button type="button" data-close-modal="modalDbConfig" class="text-slate-400 hover:text-white transition cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -524,47 +629,54 @@
       </div>
 
       <div class="p-6 space-y-4 text-xs sm:text-sm text-slate-600">
-        <div class="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-1.5">
-          <div class="font-bold flex items-center gap-1.5 text-indigo-800">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Cara Menghubungkan Database Gratis Agar Sinkron di Semua Perangkat:</span>
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-emerald-800">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Sudah Terhubung ke Realtime Database Anda:</span>
           </div>
-          <ol class="list-decimal list-inside space-y-1 text-xs leading-relaxed">
-            <li>Buka <a href="https://console.firebase.google.com/" target="_blank" class="underline font-semibold text-indigo-700">Firebase Console</a>, buat Project baru.</li>
-            <li>Pilih menu <strong>Build &rarr; Firestore Database</strong>, klik <strong>Create Database</strong>, pilih <strong>Start in test mode</strong>.</li>
-            <li>Pilih menu <strong>Build &rarr; Authentication</strong>, aktifkan metode login <strong>Anonymous</strong>.</li>
-            <li>Di halaman Project Overview, klik ikon <strong>Web (&lt;/&gt;)</strong>, lalu <strong>copy-paste</strong> bagian <code>firebaseConfig</code> ke kotak di bawah ini, atau masukkan langsung ke dalam file <code>index.html</code> sebelum di-upload ke GitHub.</li>
-          </ol>
+          <p class="text-xs leading-relaxed">
+            Aplikasi ini sudah diatur otomatis ke URL: <br/>
+            <code class="font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app</code>
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-amber-800">
+            <i class="fa-solid fa-key"></i>
+            <span>PENTING: Pastikan Tab "Rules" di Firebase Sudah Terbuka</span>
+          </div>
+          <p class="text-xs leading-relaxed">
+            Di halaman Firebase <strong>Realtime Database</strong> Anda (di samping tab <em>Data</em>), klik tab <strong>Rules</strong>, pastikan kodenya seperti di bawah ini, lalu klik tombol <strong>Publish</strong>:
+          </p>
+          <pre class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg font-mono text-[11px] overflow-x-auto">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</pre>
         </div>
 
         <div>
           <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">
-            Paste JSON / Kode Objek <code>firebaseConfig</code> Anda di Sini:
+            Link URL Realtime Database (Atau Objek <code>firebaseConfig</code>):
           </label>
           <textarea
             id="inputFirebaseConfig"
-            rows="7"
-            placeholder='{
-  "apiKey": "AIzaSy...",
-  "authDomain": "nama-project.firebaseapp.com",
-  "projectId": "nama-project",
-  "storageBucket": "nama-project.appspot.com",
-  "messagingSenderId": "123456789",
-  "appId": "1:123456789:web:abcdef"
-}'
+            rows="3"
+            placeholder="https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app/"
             class="w-full p-3 font-mono text-xs border border-slate-300 rounded-xl bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          ></textarea>
+          >https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app</textarea>
         </div>
 
         <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-          <button type="button" id="btnDownloadConfiguredHtml" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition cursor-pointer" title="Unduh file index.html yang sudah tertanam konfigurasi Firebase Anda untuk di-upload ke GitHub">
+          <button type="button" id="btnDownloadConfiguredHtml" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition cursor-pointer" title="Unduh file index.html yang sudah tertanam URL Database Anda untuk di-upload ke GitHub">
             <i class="fa-solid fa-download text-amber-400"></i>
             <span>Download index.html Siap Upload GitHub</span>
           </button>
 
           <div class="flex items-center gap-2">
             <button type="button" data-close-modal="modalDbConfig" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer">Tutup</button>
-            <button type="button" id="btnSaveDbConfig" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">Hubungkan Sekarang</button>
+            <button type="button" id="btnSaveDbConfig" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition cursor-pointer">Simpan & Hubungkan</button>
           </div>
         </div>
       </div>
@@ -591,34 +703,24 @@
   </div>
 
   <!-- =========================================================================
-       SCRIPT UTAMA APLIKASI (FIREBASE MODULAR SDK + REALTIME LOGIC)
+       SCRIPT UTAMA APLIKASI (REALTIME DATABASE DIRECT URL + LIVE SYNC)
        ========================================================================= -->
   <script type="module">
-    import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
     // =========================================================================
-    // 1. KONFIGURASI FIREBASE (ANDA BISA MENGISI LANGSUNG DI SINI ATAU LEWAT TOMBOL PENGATURAN DI WEB)
+    // 1. URL REALTIME DATABASE BAWAAN (LANGSUNG TERHUBUNG KE ASSEMBLYKMJC)
     // =========================================================================
-    const HARDCODED_FIREBASE_CONFIG = {
-      // Jika Anda ingin langsung menanamkan konfigurasi dari Firebase Console,
-      // isi di dalam kurung kurawal ini atau gunakan tombol "Download index.html Siap Upload GitHub" di web.
-    };
-
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'production-fg-monitoring-v1';
+    const DEFAULT_RTDB_URL = "https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app";
 
     // State Aplikasi
-    let db = null;
-    let auth = null;
-    let currentUser = null;
+    let activeDbUrl = DEFAULT_RTDB_URL;
     let isCloudConnected = false;
-    let unsubPOs = null;
-    let unsubLogs = null;
+    let eventSource = null;
+    let pollTimer = null;
+    let isSaving = false;
 
+    const sessionId = 'Admin-' + Math.random().toString(36).substring(2, 7).toUpperCase();
     let posData = [];
     let logsData = [];
-    let activeCustomConfig = null;
     let pendingDelete = { type: null, id: null, title: '' };
 
     // =========================================================================
@@ -677,117 +779,175 @@
       const badge = document.getElementById('syncBadge');
       if (status === 'synced') {
         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text || 'Live Sync Aktif'}</span>`;
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text || 'Live Sync Aktif (assemblykmjc)'}</span>`;
       } else if (status === 'connecting') {
         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
         badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i><span>${text || 'Menyinkronkan...'}</span>`;
       } else {
         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30';
-        badge.innerHTML = `<i class="fa-solid fa-plug-circle-xmark text-[10px]"></i><span>${text || 'Belum Terhubung Cloud'}</span>`;
+        badge.innerHTML = `<i class="fa-solid fa-plug-circle-xmark text-[10px]"></i><span>${text || 'Cek Pengaturan Rules Firebase'}</span>`;
       }
     };
 
     // =========================================================================
-    // 3. INISIALISASI FIREBASE & REAL-TIME SNAPSHOT LISTENER
+    // 3. KONEKSI LANGSUNG KE FIREBASE REALTIME DATABASE URL (TANPA RIBET)
     // =========================================================================
-    const parseFlexibleConfig = (rawText) => {
-      if (!rawText || !rawText.trim()) return null;
-      let cleaned = rawText.trim();
-      // Ambil isi di antara kurung kurawal { ... }
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    const extractDatabaseUrl = (rawInput) => {
+      if (!rawInput || !rawInput.trim()) return null;
+      const text = rawInput.trim();
+
+      // 1. Jika user langsung memasukkan URL https://....firebasedatabase.app atau firebaseio.com
+      const urlMatch = text.match(/https:\/\/[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]*(?:firebasedatabase\.app|firebaseio\.com)/);
+      if (urlMatch) {
+        return urlMatch[0].replace(/\/+$/, '');
       }
-      try {
-        return JSON.parse(cleaned);
-      } catch (_) {
-        // Jika format objek JS tanpa tanda kutip pada key (langsung copy dari Firebase Console)
-        const jsonified = cleaned
-          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2": ')
-          .replace(/'/g, '"')
-          .replace(/,\s*}/g, '}');
-        return JSON.parse(jsonified);
+
+      // 2. Jika user memasukkan objek firebaseConfig yang memiliki projectId
+      const projectMatch = text.match(/projectId\s*:\s*['"]([^'"]+)['"]/);
+      if (projectMatch && projectMatch[1]) {
+        return `https://${projectMatch[1]}-default-rtdb.asia-southeast1.firebasedatabase.app`;
       }
+
+      return null;
     };
 
-    const connectToFirebase = async (configToUse) => {
+    const applyIncomingCloudData = (dataObj) => {
+      if (!dataObj) {
+        posData = [];
+        logsData = [];
+      } else {
+        const rawPos = dataObj.pos || [];
+        const rawLogs = dataObj.logs || [];
+        posData = Array.isArray(rawPos) ? rawPos : Object.values(rawPos);
+        logsData = Array.isArray(rawLogs) ? rawLogs : Object.values(rawLogs);
+      }
+
+      posData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      logsData.sort((a, b) => {
+        if (b.date !== a.date) return (b.date || '').localeCompare(a.date || '');
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+      renderAll();
+    };
+
+    const pushStateToCloud = async () => {
+      if (!activeDbUrl) return false;
+      isSaving = true;
       try {
-        updateSyncBadge('connecting', 'Menghubungkan Cloud...');
-        if (unsubPOs) { unsubPOs(); unsubPOs = null; }
-        if (unsubLogs) { unsubLogs(); unsubLogs = null; }
-
-        const existingApps = getApps();
-        for (const existing of existingApps) {
-          await deleteApp(existing);
-        }
-
-        const app = initializeApp(configToUse);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        // RULE 3: Auth Before Queries
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-
-        onAuthStateChanged(auth, (user) => {
-          currentUser = user;
-          if (user) {
-            document.getElementById('userSessionId').textContent = user.uid;
-            isCloudConnected = true;
-            document.getElementById('setupBanner').classList.add('hidden');
-            startRealtimeListeners();
-          }
+        const endpoint = `${activeDbUrl}/prodtrack_sync.json`;
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pos: posData,
+            logs: logsData,
+            updatedAt: Date.now(),
+            updatedBy: sessionId
+          })
         });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        isCloudConnected = true;
+        document.getElementById('setupBanner').classList.add('hidden');
+        updateSyncBadge('synced', 'Live Sync Aktif');
+        return true;
       } catch (err) {
-        console.error('Firebase Init Error:', err);
+        console.error('Gagal simpan ke Realtime Database:', err);
         isCloudConnected = false;
-        updateSyncBadge('error', 'Konfigurasi Firebase Belum Aktif');
+        updateSyncBadge('error', 'Rules Database Terkunci');
         document.getElementById('setupBanner').classList.remove('hidden');
-        document.getElementById('userSessionId').textContent = 'Mode-Pratinjau';
-        renderAll();
+        return false;
+      } finally {
+        isSaving = false;
       }
     };
 
-    const startRealtimeListeners = () => {
-      if (!currentUser || !db) return;
+    const fetchInitialAndSubscribe = async (dbUrlToUse) => {
+      activeDbUrl = dbUrlToUse.replace(/\/+$/, '');
+      localStorage.setItem('prodtrack_rtdb_url', activeDbUrl);
+      document.getElementById('inputFirebaseConfig').value = activeDbUrl;
+      document.getElementById('userSessionId').textContent = sessionId;
 
-      // RULE 1 & 2: Strict Path & Simple Query
-      const posRef = collection(db, 'artifacts', appId, 'public', 'data', 'production_pos');
-      const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'production_logs');
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
 
-      unsubPOs = onSnapshot(
-        posRef,
-        (snapshot) => {
-          posData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          posData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          updateSyncBadge('synced', 'Live Sync Aktif');
-          renderAll();
-        },
-        (error) => {
-          console.error('Error Snapshot POs:', error);
-          updateSyncBadge('error', 'Gangguan Akses Firestore');
+      updateSyncBadge('connecting', 'Menghubungkan ke assemblykmjc...');
+      const endpoint = `${activeDbUrl}/prodtrack_sync.json`;
+
+      try {
+        const res = await fetch(endpoint);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('PERMISSION_DENIED');
         }
-      );
+        if (!res.ok) {
+          throw new Error(`HTTP_${res.status}`);
+        }
 
-      unsubLogs = onSnapshot(
-        logsRef,
-        (snapshot) => {
-          logsData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          logsData.sort((a, b) => {
-            if (b.date !== a.date) return (b.date || '').localeCompare(a.date || '');
-            return (b.createdAt || 0) - (a.createdAt || 0);
+        const data = await res.json();
+        isCloudConnected = true;
+        document.getElementById('setupBanner').classList.add('hidden');
+        updateSyncBadge('synced', 'Live Sync Aktif');
+
+        if (!data || (!data.pos && !data.logs)) {
+          // Jika database di Firebase masih kosong (null), otomatis isikan data contoh awal
+          await loadDemoData(true);
+        } else {
+          applyIncomingCloudData(data);
+        }
+
+        // Aktifkan Real-Time Stream (Server-Sent Events dari Firebase RTDB)
+        try {
+          eventSource = new EventSource(endpoint);
+          eventSource.addEventListener('put', (e) => {
+            if (isSaving) return;
+            try {
+              const packet = JSON.parse(e.data);
+              if (packet && packet.path === '/') {
+                applyIncomingCloudData(packet.data);
+                updateSyncBadge('synced', 'Live Sync Aktif');
+              } else {
+                // Jika perubahan parsial, ambil ulang state terbaru
+                fetch(endpoint).then((r) => r.json()).then(applyIncomingCloudData).catch(() => {});
+              }
+            } catch (_) {}
           });
-          updateSyncBadge('synced', 'Live Sync Aktif');
-          renderAll();
-        },
-        (error) => {
-          console.error('Error Snapshot Logs:', error);
+        } catch (_) {}
+
+        // Cadangan sinkronisasi berkala setiap 4 detik agar 100% anti-putus di semua jaringan HP/Pabrik
+        pollTimer = setInterval(async () => {
+          if (isSaving) return;
+          try {
+            const pollRes = await fetch(endpoint);
+            if (pollRes.ok) {
+              const latest = await pollRes.json();
+              applyIncomingCloudData(latest);
+              if (!isCloudConnected) {
+                isCloudConnected = true;
+                document.getElementById('setupBanner').classList.add('hidden');
+                updateSyncBadge('synced', 'Live Sync Aktif');
+              }
+            }
+          } catch (_) {}
+        }, 4000);
+
+      } catch (err) {
+        console.warn('Koneksi Realtime Database memerlukan pengaturan Rules:', err);
+        isCloudConnected = false;
+        updateSyncBadge('error', 'Klik Pengaturan Database / Cek Rules');
+        document.getElementById('setupBanner').classList.remove('hidden');
+        if (posData.length === 0) {
+          loadDemoData(false);
         }
-      );
+      }
     };
 
     // =========================================================================
@@ -856,78 +1016,72 @@
     };
 
     // =========================================================================
-    // 5. RENDER UI (DASHBOARD, DROPDOWN FILTER, TABEL PO & TABEL LOG)
+    // 5. RENDER SELURUH TAMPILAN DASHBOARD & TABEL
     // =========================================================================
     const renderAll = () => {
       const enriched = getEnrichedPOs();
 
-      // 1. Update 5 Kartu Dashboard
-      const totals = enriched.reduce(
-        (acc, item) => {
-          acc.target += item.targetQty;
-          acc.output += item.totalOutput;
-          acc.balance += item.balance;
-          acc.fg += item.totalFGSent;
-          acc.ready += item.readyInLine;
-          return acc;
-        },
-        { target: 0, output: 0, balance: 0, fg: 0, ready: 0 }
-      );
+      // 1. Update 5 Kartu Statistik Atas
+      const sumTarget = enriched.reduce((acc, p) => acc + p.targetQty, 0);
+      const sumOutput = enriched.reduce((acc, p) => acc + p.totalOutput, 0);
+      const sumBalance = enriched.reduce((acc, p) => acc + p.balance, 0);
+      const sumFG = enriched.reduce((acc, p) => acc + p.totalFGSent, 0);
+      const sumReady = enriched.reduce((acc, p) => acc + p.readyInLine, 0);
 
-      document.getElementById('statTotalTarget').textContent = formatNum(totals.target);
-      document.getElementById('statTotalPOCount').textContent = enriched.length;
-      document.getElementById('statTotalOutput').textContent = formatNum(totals.output);
-      document.getElementById('statOutputPct').textContent =
-        totals.target > 0 ? `${Math.round((totals.output / totals.target) * 100)}%` : '0%';
-      document.getElementById('statTotalBalance').textContent = formatNum(totals.balance);
-      document.getElementById('statTotalFG').textContent = formatNum(totals.fg);
-      document.getElementById('statFGPct').textContent =
-        totals.target > 0 ? `${Math.round((totals.fg / totals.target) * 100)}%` : '0%';
-      document.getElementById('statReadyInLine').textContent = formatNum(totals.ready);
+      document.getElementById('statTotalTarget').textContent = formatNum(sumTarget);
+      document.getElementById('statTotalPOCount').textContent = formatNum(enriched.length);
+      document.getElementById('statTotalOutput').textContent = formatNum(sumOutput);
+      document.getElementById('statOutputPct').textContent = sumTarget > 0 ? `${Math.round((sumOutput / sumTarget) * 100)}%` : '0%';
+      document.getElementById('statTotalBalance').textContent = formatNum(sumBalance);
+      document.getElementById('statTotalFG').textContent = formatNum(sumFG);
+      document.getElementById('statFGPct').textContent = sumTarget > 0 ? `${Math.round((sumFG / sumTarget) * 100)}%` : '0%';
+      document.getElementById('statReadyInLine').textContent = formatNum(sumReady);
 
       document.getElementById('badgeCountPO').textContent = enriched.length;
       document.getElementById('badgeCountLogs').textContent = logsData.length;
 
-      // 2. Update Dropdown Filter Line & Filter PO di Tab Log
-      const selectLine = document.getElementById('selectFilterLine');
-      const currentLineVal = selectLine.value;
+      // 2. Update Dropdown Filter Line & PO
+      const lineSelect = document.getElementById('selectFilterLine');
+      const currentLineVal = lineSelect.value;
       const uniqueLines = Array.from(new Set(posData.map((p) => p.line).filter(Boolean))).sort();
-      selectLine.innerHTML = `<option value="ALL">Semua Line Produksi</option>` +
+      lineSelect.innerHTML = `<option value="ALL">Semua Line Produksi</option>` +
         uniqueLines.map((l) => `<option value="${l}">${l}</option>`).join('');
-      if (uniqueLines.includes(currentLineVal)) selectLine.value = currentLineVal;
+      if (uniqueLines.includes(currentLineVal)) lineSelect.value = currentLineVal;
 
-      const selectLogPO = document.getElementById('selectFilterLogPO');
-      const currentLogPOVal = selectLogPO.value;
-      selectLogPO.innerHTML = `<option value="ALL">Semua Nomor PO</option>` +
+      const logPOSelect = document.getElementById('selectFilterLogPO');
+      const currentLogPOVal = logPOSelect.value;
+      logPOSelect.innerHTML = `<option value="ALL">Semua Nomor PO</option>` +
         posData.map((p) => `<option value="${p.id}">${p.poNumber} — ${p.styleName}</option>`).join('');
-      if (posData.some((p) => p.id === currentLogPOVal)) selectLogPO.value = currentLogPOVal;
+      if (posData.some((p) => p.id === currentLogPOVal)) logPOSelect.value = currentLogPOVal;
 
-      // 3. Filter & Render Tabel PO
-      const searchQ = document.getElementById('inputSearchPO').value.toLowerCase().trim();
-      const lineFilter = selectLine.value;
-      const statusFilter = document.getElementById('selectFilterStatus').value;
+      // 3. Filter & Render Baris Tabel PO
+      const searchVal = (document.getElementById('inputSearchPO').value || '').toLowerCase();
+      const filterLineVal = lineSelect.value;
+      const filterStatusVal = document.getElementById('selectFilterStatus').value;
 
       const filteredPOs = enriched.filter((po) => {
-        const matchText =
-          (po.poNumber || '').toLowerCase().includes(searchQ) ||
-          (po.styleName || '').toLowerCase().includes(searchQ) ||
-          (po.line || '').toLowerCase().includes(searchQ);
-        const matchLine = lineFilter === 'ALL' || po.line === lineFilter;
+        const matchSearch =
+          (po.poNumber || '').toLowerCase().includes(searchVal) ||
+          (po.styleName || '').toLowerCase().includes(searchVal) ||
+          (po.line || '').toLowerCase().includes(searchVal);
+        const matchLine = filterLineVal === 'ALL' || po.line === filterLineVal;
+
         let matchStatus = true;
-        if (statusFilter === 'PROSES') matchStatus = po.balance > 0;
-        if (statusFilter === 'READY_LINE') matchStatus = po.readyInLine > 0;
-        if (statusFilter === 'SELESAI') matchStatus = po.balance === 0 && po.targetQty > 0;
-        return matchText && matchLine && matchStatus;
+        if (filterStatusVal === 'PROSES') matchStatus = po.balance > 0;
+        if (filterStatusVal === 'READY_LINE') matchStatus = po.readyInLine > 0;
+        if (filterStatusVal === 'SELESAI') matchStatus = po.balance === 0 && po.targetQty > 0;
+
+        return matchSearch && matchLine && matchStatus;
       });
 
       const tbodyPO = document.getElementById('tbodyPO');
-      const emptyStatePO = document.getElementById('emptyStatePO');
+      const emptyPO = document.getElementById('emptyStatePO');
 
       if (filteredPOs.length === 0) {
         tbodyPO.innerHTML = '';
-        emptyStatePO.classList.remove('hidden');
+        emptyPO.classList.remove('hidden');
       } else {
-        emptyStatePO.classList.add('hidden');
+        emptyPO.classList.add('hidden');
         tbodyPO.innerHTML = filteredPOs.map((po) => {
           const lastOutHtml = po.lastOutputLog
             ? `<div class="font-bold text-blue-600">+${formatNum(po.lastOutputLog.outputQty)} pcs</div>
@@ -935,74 +1089,88 @@
             : `<span class="text-xs text-slate-400 italic">Belum ada input</span>`;
 
           const balanceHtml = po.balance > 0
-            ? `<span class="inline-block px-2.5 py-1 rounded-lg font-bold text-rose-600 bg-rose-50 border border-rose-100">-${formatNum(po.balance)} pcs</span>`
-            : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200">
-                 <i class="fa-solid fa-check"></i> Selesai
-               </span>`;
+            ? `<span class="inline-block px-2.5 py-1 rounded-lg font-bold text-rose-600 bg-rose-50 border border-rose-200/70">-${formatNum(po.balance)} pcs</span>`
+            : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200"><i class="fa-solid fa-circle-check"></i> Lunas</span>`;
 
-          const estHtml = po.balance === 0 && po.targetQty > 0
-            ? `<div class="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                 <i class="fa-solid fa-circle-check"></i> Target Terpenuhi
-               </div>`
-            : po.estDaysLeft !== null
-            ? `<div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
-                 <div class="text-xs font-bold text-indigo-700 flex items-center gap-1">
-                   <i class="fa-regular fa-clock"></i> ${po.estDaysLeft} Hari Kerja Lagi
-                 </div>
-                 <div class="text-[11px] text-slate-600 mt-0.5">Est: <strong>${po.estDateStr}</strong></div>
-                 <div class="text-[10px] text-slate-400 mt-0.5">Avg: ${formatNum(po.avgActualDaily || po.dailyTarget)} pcs/hr</div>
-               </div>`
-            : `<span class="text-xs text-slate-400">-</span>`;
+          let estHtml = '';
+          if (po.balance === 0 && po.targetQty > 0) {
+            estHtml = `
+              <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-xs font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i>
+                <span>Produksi Selesai</span>
+              </div>`;
+          } else if (po.estDaysLeft !== null) {
+            const speedInfo = po.avgActualDaily > 0
+              ? `Rata-rata: ${formatNum(po.avgActualDaily)} pcs/hr`
+              : `Target: ${formatNum(po.dailyTarget)} pcs/hr`;
+            estHtml = `
+              <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+                <div class="text-xs font-bold text-indigo-700 flex items-center gap-1">
+                  <i class="fa-regular fa-clock"></i>
+                  <span>${po.estDaysLeft} Hari Kerja Lagi</span>
+                </div>
+                <div class="text-[11px] text-slate-600 mt-0.5">Est: <strong>${po.estDateStr}</strong></div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${speedInfo}</div>
+              </div>`;
+          } else {
+            estHtml = `<span class="text-xs text-slate-400 italic">Input output harian dulu</span>`;
+          }
 
           return `
             <tr class="hover:bg-slate-50/90 transition">
-              <!-- Info PO & Line -->
+              <!-- 1. PO & Style -->
               <td class="py-4 px-4 align-top min-w-[200px]">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-bold text-slate-900">${po.poNumber}</span>
+                  <span class="font-bold text-slate-900 text-sm">${po.poNumber}</span>
                   <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${po.line}</span>
                 </div>
-                <div class="text-xs font-medium text-slate-700 mt-1">${po.styleName}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Mulai: ${formatDateIndo(po.startDate)} • Target/hr: ${formatNum(po.dailyTarget)}</div>
+                <div class="text-xs font-semibold text-slate-700 mt-1">${po.styleName}</div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  Mulai: ${formatDateIndo(po.startDate)}
+                  ${po.dailyTarget ? ` • Target/hr: ${formatNum(po.dailyTarget)}` : ''}
+                </div>
+                ${po.notes ? `<div class="text-[11px] text-indigo-600/80 mt-0.5 italic">"${po.notes}"</div>` : ''}
               </td>
 
-              <!-- Target PO -->
-              <td class="py-4 px-4 align-top text-right font-bold text-slate-800 whitespace-nowrap">
+              <!-- 2. Target PO -->
+              <td class="py-4 px-4 align-top text-right font-extrabold text-slate-800 whitespace-nowrap">
                 ${formatNum(po.targetQty)} <span class="text-xs font-normal text-slate-400">pcs</span>
               </td>
 
-              <!-- Output Harian Terakhir -->
+              <!-- 3. Output Harian Terakhir -->
               <td class="py-4 px-4 align-top text-right whitespace-nowrap">
                 ${lastOutHtml}
               </td>
 
-              <!-- Total Output & Progress -->
+              <!-- 4. Total Output & Progress -->
               <td class="py-4 px-4 align-top min-w-[175px]">
                 <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="font-bold text-blue-600">${formatNum(po.totalOutput)} pcs</span>
-                  <span class="font-semibold text-slate-600">${po.outputPct}%</span>
+                  <span class="font-extrabold text-blue-600 text-sm">${formatNum(po.totalOutput)} pcs</span>
+                  <span class="font-bold text-slate-600">${po.outputPct}%</span>
                 </div>
                 <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div class="h-full rounded-full ${po.outputPct >= 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width: ${po.outputPct}%"></div>
                 </div>
-                <div class="text-[11px] text-slate-400 mt-1">${po.activeDaysCount} hari kerja aktif</div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  ${po.activeDaysCount} hari kerja tercatat
+                </div>
               </td>
 
-              <!-- Kekurangan (Balance) -->
+              <!-- 5. Kekurangan / Balance -->
               <td class="py-4 px-4 align-top text-right whitespace-nowrap">
                 ${balanceHtml}
               </td>
 
-              <!-- Estimasi Selesai -->
+              <!-- 6. Estimasi Selesai -->
               <td class="py-4 px-4 align-top min-w-[175px]">
                 ${estHtml}
               </td>
 
-              <!-- Status Finish Good -->
-              <td class="py-4 px-4 align-top min-w-[205px]">
+              <!-- 7. Transfer Finish Good -->
+              <td class="py-4 px-4 align-top min-w-[210px]">
                 <div class="flex items-center justify-between text-xs mb-1">
                   <span class="text-slate-500">Terkirim FG:</span>
-                  <span class="font-bold text-emerald-600">${formatNum(po.totalFGSent)} pcs (${po.fgPct}%)</span>
+                  <span class="font-extrabold text-emerald-600 text-sm">${formatNum(po.totalFGSent)} pcs (${po.fgPct}%)</span>
                 </div>
                 <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
                   <div class="h-full bg-emerald-500 rounded-full" style="width: ${po.fgPct}%"></div>
@@ -1019,20 +1187,45 @@
                 </div>
               </td>
 
-              <!-- Tombol Aksi Cepat -->
+              <!-- 8. Tombol Aksi Cepat -->
               <td class="py-4 px-4 align-top text-center whitespace-nowrap">
                 <div class="flex flex-col gap-1.5">
-                  <button data-action="open-tx" data-mode="output" data-id="${po.id}" class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition cursor-pointer">
-                    <i class="fa-solid fa-plus"></i> Input Output Harian
+                  <button
+                    data-action="open-tx"
+                    data-mode="output"
+                    data-id="${po.id}"
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition cursor-pointer"
+                  >
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Input Output Harian</span>
                   </button>
-                  <button data-action="open-tx" data-mode="fg" data-id="${po.id}" class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer">
-                    <i class="fa-solid fa-truck-fast"></i> Transfer ke FG
+
+                  <button
+                    data-action="open-tx"
+                    data-mode="fg"
+                    data-id="${po.id}"
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer"
+                  >
+                    <i class="fa-solid fa-truck-fast text-[10px]"></i>
+                    <span>Transfer ke FG</span>
                   </button>
+
                   <div class="flex items-center justify-center gap-1 pt-0.5">
-                    <button data-action="edit-po" data-id="${po.id}" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer" title="Edit PO">
+                    <button
+                      data-action="edit-po"
+                      data-id="${po.id}"
+                      class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                      title="Edit PO"
+                    >
                       <i class="fa-solid fa-pen-to-square"></i>
                     </button>
-                    <button data-action="delete-po" data-id="${po.id}" data-title="${po.poNumber}" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Hapus PO">
+                    <button
+                      data-action="delete-po"
+                      data-id="${po.id}"
+                      data-title="${po.poNumber}"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                      title="Hapus PO"
+                    >
                       <i class="fa-solid fa-trash-can"></i>
                     </button>
                   </div>
@@ -1043,27 +1236,27 @@
         }).join('');
       }
 
-      // 4. Filter & Render Tabel Log Harian
-      const logPOFilter = selectLogPO.value;
-      const logDateFilter = document.getElementById('inputFilterLogDate').value;
+      // 4. Filter & Render Tabel Riwayat Log
+      const filterLogPOVal = logPOSelect.value;
+      const filterLogDateVal = document.getElementById('inputFilterLogDate').value;
       const btnResetDate = document.getElementById('btnResetLogDate');
-      if (logDateFilter) btnResetDate.classList.remove('hidden');
+      if (filterLogDateVal) btnResetDate.classList.remove('hidden');
       else btnResetDate.classList.add('hidden');
 
       const filteredLogs = logsData.filter((l) => {
-        const matchPO = logPOFilter === 'ALL' || l.poId === logPOFilter;
-        const matchDate = !logDateFilter || l.date === logDateFilter;
+        const matchPO = filterLogPOVal === 'ALL' || l.poId === filterLogPOVal;
+        const matchDate = !filterLogDateVal || l.date === filterLogDateVal;
         return matchPO && matchDate;
       });
 
       const tbodyLogs = document.getElementById('tbodyLogs');
-      const emptyStateLogs = document.getElementById('emptyStateLogs');
+      const emptyLogs = document.getElementById('emptyStateLogs');
 
       if (filteredLogs.length === 0) {
         tbodyLogs.innerHTML = '';
-        emptyStateLogs.classList.remove('hidden');
+        emptyLogs.classList.remove('hidden');
       } else {
-        emptyStateLogs.classList.add('hidden');
+        emptyLogs.classList.add('hidden');
         tbodyLogs.innerHTML = filteredLogs.map((l) => {
           const parentPO = posData.find((p) => p.id === l.poId);
           const poNum = parentPO ? parentPO.poNumber : (l.poNumberBackup || 'PO Terhapus');
@@ -1071,7 +1264,7 @@
 
           return `
             <tr class="hover:bg-slate-50/90 transition">
-              <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-800">${formatDateIndo(l.date)}</td>
+              <td class="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">${formatDateIndo(l.date)}</td>
               <td class="py-3 px-4">
                 <div class="font-bold text-slate-900">${poNum}</div>
                 <div class="text-xs text-slate-500">${styleName}</div>
@@ -1080,14 +1273,24 @@
                 <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">${l.line || '-'}</span>
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
-                ${Number(l.outputQty) > 0 ? `<span class="font-bold text-blue-600">+${formatNum(l.outputQty)} pcs</span>` : '<span class="text-slate-400">-</span>'}
+                ${Number(l.outputQty) > 0
+                  ? `<span class="font-bold text-blue-600">+${formatNum(l.outputQty)} pcs</span>`
+                  : `<span class="text-slate-300">-</span>`}
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
-                ${Number(l.fgSentQty) > 0 ? `<span class="font-bold text-emerald-600">+${formatNum(l.fgSentQty)} pcs</span>` : '<span class="text-slate-400">-</span>'}
+                ${Number(l.fgSentQty) > 0
+                  ? `<span class="font-bold text-emerald-600">+${formatNum(l.fgSentQty)} pcs</span>`
+                  : `<span class="text-slate-300">-</span>`}
               </td>
-              <td class="py-3 px-4 text-xs text-slate-600">${l.notes || '<span class="text-slate-400 italic">-</span>'}</td>
+              <td class="py-3 px-4 text-xs text-slate-600">${l.notes || '<span class="text-slate-300 italic">-</span>'}</td>
               <td class="py-3 px-4 text-center">
-                <button data-action="delete-log" data-id="${l.id}" data-title="${poNum} (${formatDateIndo(l.date)})" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Hapus Catatan Ini">
+                <button
+                  data-action="delete-log"
+                  data-id="${l.id}"
+                  data-title="${poNum} (${formatDateIndo(l.date)})"
+                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                  title="Hapus Catatan Ini"
+                >
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </td>
@@ -1098,7 +1301,7 @@
     };
 
     // =========================================================================
-    // 6. OPERASI TAMBAH, EDIT, HAPUS (MENDUKUNG CLOUD FIRESTORE & MODE PRATINJAU)
+    // 6. OPERASI TAMBAH, EDIT, HAPUS (LANGSUNG SINKRON KE REALTIME DATABASE)
     // =========================================================================
     const savePOData = async (e) => {
       e.preventDefault();
@@ -1114,33 +1317,25 @@
         updatedAt: Date.now()
       };
 
-      try {
-        if (isCloudConnected && currentUser && db) {
-          if (editId) {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'production_pos', editId), payload);
-            showToast(`PO ${payload.poNumber} berhasil diperbarui!`);
-          } else {
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'production_pos'), {
-              ...payload,
-              createdAt: Date.now(),
-              createdBy: currentUser.uid
-            });
-            showToast(`PO ${payload.poNumber} berhasil ditambahkan & disinkronkan!`);
-          }
-        } else {
-          // Mode Pratinjau (In-Memory)
-          if (editId) {
-            posData = posData.map((p) => (p.id === editId ? { ...p, ...payload } : p));
-          } else {
-            posData.unshift({ id: 'local-' + Date.now(), ...payload, createdAt: Date.now() });
-          }
-          renderAll();
-          showToast(`PO ${payload.poNumber} disimpan (Mode Pratinjau).`);
-        }
-        document.getElementById('modalPO').classList.add('hidden');
-      } catch (err) {
-        console.error(err);
-        showToast('Gagal menyimpan data PO.', 'error');
+      if (editId) {
+        posData = posData.map((p) => (p.id === editId ? { ...p, ...payload } : p));
+      } else {
+        posData.unshift({
+          id: 'po-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+          ...payload,
+          createdAt: Date.now(),
+          createdBy: sessionId
+        });
+      }
+
+      renderAll();
+      document.getElementById('modalPO').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast(`PO ${payload.poNumber} tersimpan & disinkronkan ke semua perangkat!`);
+      } else {
+        showToast(`PO ${payload.poNumber} disimpan secara lokal (buka Rules Firebase untuk sinkronisasi).`, 'error');
       }
     };
 
@@ -1212,6 +1407,7 @@
 
       const parentPO = posData.find((p) => p.id === poId);
       const payload = {
+        id: 'log-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
         poId,
         poNumberBackup: parentPO ? parentPO.poNumber : '',
         styleNameBackup: parentPO ? parentPO.styleName : '',
@@ -1220,64 +1416,45 @@
         outputQty: outQty,
         fgSentQty: fgQty,
         notes: document.getElementById('txNotesInput').value.trim(),
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        createdBy: sessionId
       };
 
-      try {
-        if (isCloudConnected && currentUser && db) {
-          await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'production_logs'), {
-            ...payload,
-            createdBy: currentUser.uid
-          });
-          showToast('Data progres harian berhasil disimpan & tersinkronisasi!');
-        } else {
-          logsData.unshift({ id: 'log-' + Date.now(), ...payload });
-          renderAll();
-          showToast('Data progres harian disimpan (Mode Pratinjau).');
-        }
-        document.getElementById('modalTransaction').classList.add('hidden');
-      } catch (err) {
-        console.error(err);
-        showToast('Gagal menyimpan transaksi harian.', 'error');
+      logsData.unshift(payload);
+      renderAll();
+      document.getElementById('modalTransaction').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast('Progres harian berhasil disimpan & tersinkronisasi ke semua perangkat!');
+      } else {
+        showToast('Progres disimpan secara lokal (pastikan Rules Firebase sudah true).', 'error');
       }
     };
 
     const executeConfirmedDelete = async () => {
       if (!pendingDelete.id) return;
-      try {
-        if (isCloudConnected && currentUser && db) {
-          if (pendingDelete.type === 'po') {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'production_pos', pendingDelete.id));
-            const related = logsData.filter((l) => l.poId === pendingDelete.id);
-            for (const item of related) {
-              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'production_logs', item.id));
-            }
-          } else {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'production_logs', pendingDelete.id));
-          }
-          showToast(`Data ${pendingDelete.title} berhasil dihapus.`);
-        } else {
-          if (pendingDelete.type === 'po') {
-            posData = posData.filter((p) => p.id !== pendingDelete.id);
-            logsData = logsData.filter((l) => l.poId !== pendingDelete.id);
-          } else {
-            logsData = logsData.filter((l) => l.id !== pendingDelete.id);
-          }
-          renderAll();
-          showToast(`Data ${pendingDelete.title} dihapus.`);
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Gagal menghapus data.', 'error');
-      } finally {
-        document.getElementById('modalDeleteConfirm').classList.add('hidden');
+      if (pendingDelete.type === 'po') {
+        posData = posData.filter((p) => p.id !== pendingDelete.id);
+        logsData = logsData.filter((l) => l.poId !== pendingDelete.id);
+      } else {
+        logsData = logsData.filter((l) => l.id !== pendingDelete.id);
+      }
+      renderAll();
+      document.getElementById('modalDeleteConfirm').classList.add('hidden');
+
+      const synced = await pushStateToCloud();
+      if (synced) {
+        showToast(`Data ${pendingDelete.title} berhasil dihapus di semua perangkat.`);
+      } else {
+        showToast(`Data ${pendingDelete.title} dihapus.`);
       }
     };
 
     // =========================================================================
     // 7. FITUR MUAT DATA CONTOH & EXPORT CSV/EXCEL
     // =========================================================================
-    const loadDemoData = async () => {
+    const loadDemoData = async (syncToCloud = true) => {
       const today = new Date();
       const pastISO = (daysAgo) => {
         const d = new Date(today);
@@ -1285,8 +1462,14 @@
         return d.toISOString().split('T')[0];
       };
 
-      const samplePOs = [
+      const now = Date.now();
+      const po1Id = 'po-demo-101';
+      const po2Id = 'po-demo-102';
+      const po3Id = 'po-demo-105';
+
+      posData = [
         {
+          id: po1Id,
           poNumber: 'PO-2026-101',
           styleName: 'Kemeja Tactical Ripstop Hitam',
           line: 'Line A1 - Sewing',
@@ -1294,9 +1477,10 @@
           dailyTarget: 500,
           startDate: pastISO(4),
           notes: 'Prioritas Ekspor Batch 1',
-          createdAt: Date.now() - 300000
+          createdAt: now - 300000
         },
         {
+          id: po2Id,
           poNumber: 'PO-2026-102',
           styleName: 'Celana Cargo Chino Cream',
           line: 'Line B2 - Sewing',
@@ -1304,9 +1488,10 @@
           dailyTarget: 450,
           startDate: pastISO(3),
           notes: 'Aksesoris kancing lengkap',
-          createdAt: Date.now() - 200000
+          createdAt: now - 200000
         },
         {
+          id: po3Id,
           poNumber: 'PO-2026-105',
           styleName: 'Jaket Parka Waterproof Navy',
           line: 'Line C1 - Jacket',
@@ -1314,51 +1499,65 @@
           dailyTarget: 300,
           startDate: pastISO(2),
           notes: 'QC ketat bagian seam seal',
-          createdAt: Date.now() - 100000
+          createdAt: now - 100000
         }
       ];
 
-      try {
-        if (isCloudConnected && currentUser && db) {
-          const posCol = collection(db, 'artifacts', appId, 'public', 'data', 'production_pos');
-          const logsCol = collection(db, 'artifacts', appId, 'public', 'data', 'production_logs');
-
-          for (let i = 0; i < samplePOs.length; i++) {
-            const docRef = await addDoc(posCol, { ...samplePOs[i], createdBy: currentUser.uid });
-            const poId = docRef.id;
-            if (i === 0) {
-              await addDoc(logsCol, { poId, poNumberBackup: samplePOs[i].poNumber, styleNameBackup: samplePOs[i].styleName, date: pastISO(2), line: samplePOs[i].line, outputQty: 520, fgSentQty: 450, notes: 'Hari ke-1 lancar', createdAt: Date.now() - 200000 });
-              await addDoc(logsCol, { poId, poNumberBackup: samplePOs[i].poNumber, styleNameBackup: samplePOs[i].styleName, date: pastISO(1), line: samplePOs[i].line, outputQty: 540, fgSentQty: 500, notes: 'SJ-FG-0012 diserahkan', createdAt: Date.now() - 100000 });
-            } else if (i === 1) {
-              await addDoc(logsCol, { poId, poNumberBackup: samplePOs[i].poNumber, styleNameBackup: samplePOs[i].styleName, date: pastISO(1), line: samplePOs[i].line, outputQty: 600, fgSentQty: 500, notes: 'Sisa 100 pcs tunggu packing', createdAt: Date.now() - 90000 });
-            } else {
-              await addDoc(logsCol, { poId, poNumberBackup: samplePOs[i].poNumber, styleNameBackup: samplePOs[i].styleName, date: pastISO(1), line: samplePOs[i].line, outputQty: 310, fgSentQty: 300, notes: 'Transfer tahap 1', createdAt: Date.now() - 50000 });
-            }
-          }
-          showToast('Data contoh berhasil dimuat & disinkronkan ke Cloud!');
-        } else {
-          samplePOs.forEach((p, idx) => {
-            const fakeId = 'demo-po-' + idx + '-' + Date.now();
-            posData.push({ id: fakeId, ...p });
-            logsData.push({
-              id: 'demo-log-' + idx + '-' + Date.now(),
-              poId: fakeId,
-              poNumberBackup: p.poNumber,
-              styleNameBackup: p.styleName,
-              date: pastISO(1),
-              line: p.line,
-              outputQty: p.dailyTarget,
-              fgSentQty: Math.round(p.dailyTarget * 0.85),
-              notes: 'Simulasi output harian',
-              createdAt: Date.now()
-            });
-          });
-          renderAll();
-          showToast('Data contoh berhasil dimuat!');
+      logsData = [
+        {
+          id: 'log-demo-1',
+          poId: po1Id,
+          poNumberBackup: 'PO-2026-101',
+          styleNameBackup: 'Kemeja Tactical Ripstop Hitam',
+          date: pastISO(2),
+          line: 'Line A1 - Sewing',
+          outputQty: 520,
+          fgSentQty: 450,
+          notes: 'Hari ke-1 lancar',
+          createdAt: now - 200000
+        },
+        {
+          id: 'log-demo-2',
+          poId: po1Id,
+          poNumberBackup: 'PO-2026-101',
+          styleNameBackup: 'Kemeja Tactical Ripstop Hitam',
+          date: pastISO(1),
+          line: 'Line A1 - Sewing',
+          outputQty: 540,
+          fgSentQty: 500,
+          notes: 'SJ-FG-0012 diserahkan ke gudang FG',
+          createdAt: now - 100000
+        },
+        {
+          id: 'log-demo-3',
+          poId: po2Id,
+          poNumberBackup: 'PO-2026-102',
+          styleNameBackup: 'Celana Cargo Chino Cream',
+          date: pastISO(1),
+          line: 'Line B2 - Sewing',
+          outputQty: 600,
+          fgSentQty: 500,
+          notes: 'Sisa 100 pcs tunggu packing',
+          createdAt: now - 90000
+        },
+        {
+          id: 'log-demo-4',
+          poId: po3Id,
+          poNumberBackup: 'PO-2026-105',
+          styleNameBackup: 'Jaket Parka Waterproof Navy',
+          date: pastISO(1),
+          line: 'Line C1 - Jacket',
+          outputQty: 310,
+          fgSentQty: 300,
+          notes: 'Transfer FG tahap 1',
+          createdAt: now - 50000
         }
-      } catch (err) {
-        console.error(err);
-        showToast('Gagal memuat data contoh.', 'error');
+      ];
+
+      renderAll();
+      if (syncToCloud) {
+        const ok = await pushStateToCloud();
+        if (ok) showToast('Data contoh berhasil dimuat & disinkronkan ke Cloud!');
       }
     };
 
@@ -1519,14 +1718,12 @@
       });
 
       // Tombol Demo & Export
-      document.getElementById('btnLoadDemo').addEventListener('click', loadDemoData);
+      document.getElementById('btnLoadDemo').addEventListener('click', () => loadDemoData(true));
       document.getElementById('btnExportCSV').addEventListener('click', exportToCSV);
 
-      // Modal Pengaturan Database (Firebase Config)
+      // Modal Pengaturan Database (Mendukung URL Realtime Database langsung)
       const openConfigModal = () => {
-        if (activeCustomConfig) {
-          document.getElementById('inputFirebaseConfig').value = JSON.stringify(activeCustomConfig, null, 2);
-        }
+        document.getElementById('inputFirebaseConfig').value = activeDbUrl || DEFAULT_RTDB_URL;
         document.getElementById('modalDbConfig').classList.remove('hidden');
       };
       document.getElementById('btnOpenDbConfig').addEventListener('click', openConfigModal);
@@ -1534,69 +1731,42 @@
 
       document.getElementById('btnSaveDbConfig').addEventListener('click', () => {
         const raw = document.getElementById('inputFirebaseConfig').value;
-        try {
-          const parsed = parseFlexibleConfig(raw);
-          if (!parsed || !parsed.apiKey || !parsed.projectId) {
-            showToast('Format firebaseConfig tidak lengkap (pastikan ada apiKey dan projectId).', 'error');
-            return;
-          }
-          activeCustomConfig = parsed;
-          connectToFirebase(parsed);
-          document.getElementById('modalDbConfig').classList.add('hidden');
-          showToast('Menghubungkan ke proyek Firebase Anda...');
-        } catch (err) {
-          showToast('Format kode konfigurasi tidak valid. Pastikan menyalin objek firebaseConfig dengan benar.', 'error');
+        const extractedUrl = extractDatabaseUrl(raw);
+        if (!extractedUrl) {
+          showToast('Masukkan link URL Realtime Database yang valid (contoh: https://assemblykmjc-default-rtdb.asia-southeast1.firebasedatabase.app)', 'error');
+          return;
         }
+        document.getElementById('modalDbConfig').classList.add('hidden');
+        fetchInitialAndSubscribe(extractedUrl);
+        showToast('Menghubungkan ke Realtime Database Anda...');
       });
 
-      // Download file index.html yang sudah ditanamkan konfigurasi Firebase
-      document.getElementById('btnDownloadConfiguredHtml').addEventListener('click', () => {
+      // Fungsi Download File index.html Siap Upload GitHub
+      const downloadReadyHtml = () => {
         const raw = document.getElementById('inputFirebaseConfig').value;
-        try {
-          const parsed = parseFlexibleConfig(raw);
-          if (!parsed || !parsed.apiKey || !parsed.projectId) {
-            showToast('Masukkan firebaseConfig yang valid terlebih dahulu sebelum mengunduh.', 'error');
-            return;
-          }
-          const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML.replace(
-            /const HARDCODED_FIREBASE_CONFIG = \{[\s\S]*?\};/,
-            `const HARDCODED_FIREBASE_CONFIG = ${JSON.stringify(parsed, null, 2)};`
-          );
-          const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'index.html';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          showToast('File index.html siap upload ke GitHub berhasil diunduh!');
-        } catch (err) {
-          showToast('Gagal membuat file: pastikan JSON firebaseConfig benar.', 'error');
-        }
-      });
+        const targetUrl = extractDatabaseUrl(raw) || activeDbUrl || DEFAULT_RTDB_URL;
 
-      // Cek apakah ada konfigurasi bawaan environment atau HARDCODED_FIREBASE_CONFIG
-      let initialConfig = null;
-      if (HARDCODED_FIREBASE_CONFIG && HARDCODED_FIREBASE_CONFIG.apiKey) {
-        initialConfig = HARDCODED_FIREBASE_CONFIG;
-      } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-        try {
-          initialConfig = JSON.parse(__firebase_config);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+        const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML.replace(
+          /const DEFAULT_RTDB_URL = ["'][^"']*["'];/,
+          `const DEFAULT_RTDB_URL = "${targetUrl}";`
+        );
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('File index.html siap upload ke GitHub berhasil diunduh!');
+      };
 
-      if (initialConfig && initialConfig.apiKey) {
-        activeCustomConfig = initialConfig;
-        connectToFirebase(initialConfig);
-      } else {
-        updateSyncBadge('error', 'Mode Pratinjau (Klik Pengaturan Database)');
-        document.getElementById('setupBanner').classList.remove('hidden');
-        document.getElementById('userSessionId').textContent = 'Pratinjau-Lokal';
-        loadDemoData();
-      }
+      document.getElementById('btnDownloadConfiguredHtml').addEventListener('click', downloadReadyHtml);
+      document.getElementById('btnDownloadDirectHtml').addEventListener('click', downloadReadyHtml);
+
+      // Otomatis terhubung ke database assemblykmjc saat halaman dibuka
+      const savedUrl = localStorage.getItem('prodtrack_rtdb_url') || DEFAULT_RTDB_URL;
+      fetchInitialAndSubscribe(savedUrl);
     });
   </script>
 </body>
