@@ -24,6 +24,11 @@
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+    /* ── SISTEM ROLE (GUEST VS ADMIN) ── */
+    body.guest-mode .admin-only {
+      display: none !important;
+    }
+
     /* ── HEADER ── */
     header {
       background: linear-gradient(135deg, #0f172a 0%, #1e40af 55%, #1a56db 100%);
@@ -35,14 +40,27 @@
     .brand-block .brand { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .65; }
     .brand-block h1 { font-size: 18px; font-weight: 800; }
     .brand-block .sub { font-size: 12px; opacity: .7; margin-top: 1px; }
-    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-    .sync-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .header-top-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    
+    .sync-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
     .sync-pill.connecting { background: rgba(255,255,255,.12); color: rgba(255,255,255,.75); }
     .sync-pill.synced     { background: rgba(16,185,129,.25);  color: #6ee7b7; }
     .sync-pill.error      { background: rgba(239,68,68,.2);    color: #fca5a5; }
     .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
     .sync-dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.25} }
+
+    /* Role Badge & Auth Button */
+    .role-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+    .role-badge.guest { background: rgba(255,255,255,.15); color: #e2e8f0; }
+    .role-badge.admin { background: rgba(245,158,11,.25); color: #fde68a; border: 1px solid rgba(245,158,11,.4); }
+    .btn-auth {
+      background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+      padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .15s;
+    }
+    .btn-auth:hover { background: rgba(255,255,255,.25); }
+
     #clock { font-size: 12px; opacity: .65; }
 
     /* ── LOADING ── */
@@ -78,7 +96,6 @@
 
     /* ── FORM ── */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px,1fr)); gap: 14px; }
-    .fg { }
     .fg label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
     .fg input, .fg select, .fg textarea {
       width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
@@ -228,7 +245,7 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
-<body>
+<body class="guest-mode">
 
 <!-- LOADING -->
 <div id="loadingOverlay">
@@ -242,12 +259,19 @@
     <div class="brand-block">
       <div class="brand">📦 Assembly Tracker</div>
       <h1>Kanindo Makmur Jaya 2 – Gedung C</h1>
-      <div class="sub">Assembly KMJ2-C · Dashboard</div>
+      <div class="sub">Supervisor Assembly · Multi-PO Dashboard</div>
     </div>
     <div class="header-right">
-      <div class="sync-pill connecting" id="syncPill">
-        <span class="sync-dot pulse"></span>
-        <span id="syncText">Menghubungkan…</span>
+      <div class="header-top-pills">
+        <!-- Badge Status Role -->
+        <div class="role-badge guest" id="roleBadge">👁️ Mode Guest (View Only)</div>
+        <!-- Tombol Login / Logout Admin -->
+        <button class="btn-auth" id="authBtn" onclick="handleAuthClick()">🔐 Login Admin</button>
+        <!-- Indikator Sinkronisasi -->
+        <div class="sync-pill connecting" id="syncPill">
+          <span class="sync-dot pulse"></span>
+          <span id="syncText">Menghubungkan…</span>
+        </div>
       </div>
       <span id="clock"></span>
     </div>
@@ -264,7 +288,7 @@
       <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:4px;">Overview</div>
       <h2>Semua Purchase Order</h2>
     </div>
-    <button class="btn btn-primary" onclick="openAddPoModal()">＋ Tambah PO Baru</button>
+    <button class="btn btn-primary admin-only" onclick="openAddPoModal()">＋ Tambah PO Baru</button>
   </div>
 
   <!-- Summary KPI -->
@@ -311,7 +335,7 @@
       <div id="detailPoName" style="font-size:18px;font-weight:800;"></div>
       <div id="detailPoMeta" style="font-size:12px;color:var(--muted);margin-top:1px;"></div>
     </div>
-    <div style="margin-left:auto;display:flex;gap:8px;">
+    <div class="admin-only" style="margin-left:auto;display:flex;gap:8px;">
       <button class="btn btn-ghost btn-sm" onclick="openEditPoModal()">✏️ Edit PO</button>
       <button class="btn btn-danger btn-sm" onclick="confirmDeletePo()">🗑 Hapus PO</button>
     </div>
@@ -357,9 +381,9 @@
     <div style="margin-top:10px;font-size:11px;color:var(--muted);">⚙️ Hari kerja Senin–Sabtu. Minggu libur.</div>
   </div>
 
-  <!-- Input Harian -->
-  <div class="sec">➕ Input Output Harian</div>
-  <div class="card">
+  <!-- Input Harian (HANYA ADMIN) -->
+  <div class="sec admin-only">➕ Input Output Harian</div>
+  <div class="card admin-only">
     <div class="form-grid">
       <div class="fg">
         <label>Tanggal</label>
@@ -404,7 +428,7 @@
             <th>#</th><th>Tanggal</th><th>Shift</th>
             <th>Output</th><th>Kirim FG</th>
             <th>Kum. Output</th><th>Kum. FG</th>
-            <th>Catatan</th><th>Aksi</th>
+            <th>Catatan</th><th class="admin-only">Aksi</th>
           </tr>
         </thead>
         <tbody id="logBody"></tbody>
@@ -412,6 +436,27 @@
     </div>
   </div>
 
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: LOGIN ADMIN
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalLogin">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header">
+      <h3>🔐 Akses Admin</h3>
+      <button class="modal-close" onclick="closeModalLogin()">✕</button>
+    </div>
+    <div class="fg">
+      <label>Masukkan PIN Admin</label>
+      <input type="password" id="adminPinInput" placeholder="••••" onkeydown="if(event.key==='Enter') verifyAdmin()" />
+      <small id="loginErrorMsg" style="color:#c81e1e;display:none;margin-top:6px;font-weight:700;">❌ PIN yang Anda masukkan salah!</small>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalLogin()">Batal</button>
+      <button class="btn btn-primary" onclick="verifyAdmin()">Masuk</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -490,7 +535,62 @@
 
 <script>
 // ================================================================
-//  ⚠️  KONFIGURASI FIREBASE — GANTI DENGAN CONFIG ANDA!
+//  🔐 KONFIGURASI PIN ADMIN (UBAH PIN DI SINI)
+// ================================================================
+const ADMIN_PIN = "1234"; 
+let isAdmin = sessionStorage.getItem('asmTracker_admin') === 'true';
+
+function applyRoleUI() {
+  const badge = document.getElementById('roleBadge');
+  const btn   = document.getElementById('authBtn');
+  if (isAdmin) {
+    document.body.classList.remove('guest-mode');
+    badge.className = 'role-badge admin';
+    badge.textContent = '🛡️ Mode Admin';
+    btn.textContent = 'Keluar Admin';
+  } else {
+    document.body.classList.add('guest-mode');
+    badge.className = 'role-badge guest';
+    badge.textContent = '👁️ Mode Guest (View Only)';
+    btn.textContent = '🔐 Login Admin';
+  }
+  // Render ulang untuk menyesuaikan tampilan tabel & tombol
+  renderDashboard();
+  if (currentPoId && allPos[currentPoId]) renderDetail(currentPoId);
+}
+
+function handleAuthClick() {
+  if (isAdmin) {
+    isAdmin = false;
+    sessionStorage.removeItem('asmTracker_admin');
+    applyRoleUI();
+  } else {
+    document.getElementById('adminPinInput').value = '';
+    document.getElementById('loginErrorMsg').style.display = 'none';
+    document.getElementById('modalLogin').classList.add('open');
+    setTimeout(() => document.getElementById('adminPinInput').focus(), 100);
+  }
+}
+
+function closeModalLogin() {
+  document.getElementById('modalLogin').classList.remove('open');
+}
+
+function verifyAdmin() {
+  const input = document.getElementById('adminPinInput').value;
+  if (input === ADMIN_PIN) {
+    isAdmin = true;
+    sessionStorage.setItem('asmTracker_admin', 'true');
+    closeModalLogin();
+    applyRoleUI();
+  } else {
+    document.getElementById('loginErrorMsg').style.display = 'block';
+    document.getElementById('adminPinInput').select();
+  }
+}
+
+// ================================================================
+//  ⚠️ KONFIGURASI FIREBASE
 // ================================================================
 const firebaseConfig = {
   apiKey:            "AIzaSyDwad67lipZZm6eVT0CuwlNqVIc6hVKrhc",
@@ -507,13 +607,13 @@ const firebaseConfig = {
 const isConfigured = !firebaseConfig.apiKey.includes("GANTI");
 
 // ── STATE ──
-// pos: { [poId]: { name, product, target, baseOutput, baseFG, startDate, logs: {[logId]: {...}} } }
 let allPos = {};
 let currentPoId = null;
 let db = null, posRef = null;
 
 // ── INIT FIREBASE ──
 function initFirebase() {
+  applyRoleUI();
   if (!isConfigured) {
     fallbackToLocal();
     return;
@@ -525,7 +625,6 @@ function initFirebase() {
 
     posRef.on('value', snap => {
       allPos = snap.val() || {};
-      // Normalize logs field
       Object.keys(allPos).forEach(id => {
         if (!allPos[id].logs) allPos[id].logs = {};
       });
@@ -612,7 +711,6 @@ function showDashboard() {
 function renderDashboard() {
   const ids = Object.keys(allPos);
 
-  // Summary KPIs
   let sumOut=0, sumKurang=0, sumFG=0;
   let activeCnt = 0;
   ids.forEach(id => {
@@ -627,13 +725,13 @@ function renderDashboard() {
   document.getElementById('sumKurang').textContent = sumKurang;
   document.getElementById('sumFG').textContent     = sumFG;
 
-  // PO Cards
   const grid = document.getElementById('poGrid');
   if (ids.length === 0) {
+    const hint = isAdmin ? 'Klik <strong>"＋ Tambah PO Baru"</strong> untuk memulai.' : 'Belum ada data Purchase Order yang tersedia.';
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
         <div class="icon">📋</div>
-        <p>Belum ada PO. Klik <strong>"＋ Tambah PO Baru"</strong> untuk memulai.</p>
+        <p>Belum ada PO. ${hint}</p>
       </div>`;
     return;
   }
@@ -684,6 +782,7 @@ function renderDashboard() {
 let editingPoId = null;
 
 function openAddPoModal() {
+  if (!isAdmin) return;
   editingPoId = null;
   document.getElementById('modalPoTitle').textContent = '➕ Tambah PO Baru';
   document.getElementById('modalPoSaveBtn').textContent = 'Simpan PO';
@@ -697,7 +796,7 @@ function openAddPoModal() {
 }
 
 function openEditPoModal() {
-  if (!currentPoId) return;
+  if (!isAdmin || !currentPoId) return;
   const po = allPos[currentPoId];
   editingPoId = currentPoId;
   document.getElementById('modalPoTitle').textContent = '✏️ Edit PO';
@@ -714,6 +813,7 @@ function openEditPoModal() {
 function closeModalPo() { document.getElementById('modalPo').classList.remove('open'); }
 
 function savePo() {
+  if (!isAdmin) { alert('⚠️ Akses ditolak! Hanya Admin yang dapat menyimpan PO.'); return; }
   const name    = document.getElementById('mpName').value.trim();
   const product = document.getElementById('mpProduct').value.trim();
   const target  = parseInt(document.getElementById('mpTarget').value) || 0;
@@ -753,7 +853,7 @@ function savePo() {
 //  DELETE PO
 // ================================================================
 function confirmDeletePo() {
-  if (!currentPoId) return;
+  if (!isAdmin || !currentPoId) return;
   const po = allPos[currentPoId];
   document.getElementById('confirmMsg').textContent =
     `PO "${po.name}" dan semua log-nya (${getLogs(po).length} entri) akan dihapus permanen.`;
@@ -762,7 +862,7 @@ function confirmDeletePo() {
 }
 function closeModalConfirm() { document.getElementById('modalConfirm').classList.remove('open'); }
 function deletePo() {
-  if (!currentPoId) return;
+  if (!isAdmin || !currentPoId) return;
   if (isConfigured && posRef) {
     setSyncStatus('connecting', 'Menghapus…');
     posRef.child(currentPoId).remove();
@@ -797,20 +897,17 @@ function renderDetail(poId) {
     'Target: ' + po.target + ' unit' +
     (po.startDate ? ' · Mulai: ' + fmtShort(new Date(po.startDate)) : '');
 
-  // KPI
   document.getElementById('dKpiPO').textContent    = po.target;
   document.getElementById('dKpiDone').textContent  = c.totalOut;
   document.getElementById('dKpiLeft').textContent  = c.kurang;
   document.getElementById('dKpiFG').textContent    = c.totalFG;
   document.getElementById('dKpiBelum').textContent = c.belumFG;
 
-  // Progress
   const pctStr = c.pct + '%';
   const pf = document.getElementById('dProgFill');
   pf.style.width = pctStr; pf.dataset.pct = pctStr;
   document.getElementById('dPct').textContent = pctStr;
 
-  // Alert
   const ab  = document.getElementById('detailAlert');
   const msg = document.getElementById('detailAlertMsg');
   if (c.kurang === 0) {
@@ -824,7 +921,6 @@ function renderDetail(poId) {
     msg.textContent = `📌 Progress ${c.totalOut} dari ${po.target} unit (${c.pct}%). Kekurangan: ${c.kurang} unit. FG terkirim: ${c.totalFG}.`;
   }
 
-  // Estimasi
   if (c.kurang <= 0) {
     document.getElementById('dEstSlow').textContent     = 'SELESAI ✅';
     document.getElementById('dEstSlowDays').textContent = '';
@@ -838,7 +934,6 @@ function renderDetail(poId) {
     document.getElementById('dEstFastDays').textContent = `≈ ${df} hari kerja (${c.kurang} ÷ 18/hari)`;
   }
 
-  // Log table
   renderLogTable(po, c);
 }
 
@@ -846,7 +941,8 @@ function renderLogTable(po, c) {
   const tbody = document.getElementById('logBody');
   const logs  = c.logs;
   if (!logs.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--muted);">Belum ada log. Tambah output harian di atas.</td></tr>`;
+    const colSpan = isAdmin ? 9 : 8;
+    tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:28px;color:var(--muted);">Belum ada log output harian.</td></tr>`;
     return;
   }
   let cumOut = po.baseOutput || 0;
@@ -864,7 +960,7 @@ function renderLogTable(po, c) {
       <td>${cumOut}</td>
       <td>${cumFG}</td>
       <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${log.note||'–'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="openConfirmLog('${log.key}')">🗑</button></td>
+      <td class="admin-only"><button class="btn btn-danger btn-sm" onclick="openConfirmLog('${log.key}')">🗑</button></td>
     </tr>`;
   }).join('');
 }
@@ -873,6 +969,7 @@ function renderLogTable(po, c) {
 //  ADD LOG
 // ================================================================
 function addLog() {
+  if (!isAdmin) { alert('⚠️ Akses ditolak! Hanya Admin yang dapat menambah log.'); return; }
   if (!currentPoId) return;
   const date   = document.getElementById('logDate').value;
   const shift  = document.getElementById('logShift').value;
@@ -905,6 +1002,7 @@ function addLog() {
 // ================================================================
 let pendingDeleteLogKey = null;
 function openConfirmLog(key) {
+  if (!isAdmin) return;
   pendingDeleteLogKey = key;
   document.getElementById('modalConfirmLog').classList.add('open');
   document.getElementById('confirmLogOkBtn').onclick = doDeleteLog;
@@ -914,7 +1012,7 @@ function closeModalConfirmLog() {
   pendingDeleteLogKey = null;
 }
 function doDeleteLog() {
-  if (!currentPoId || !pendingDeleteLogKey) return;
+  if (!isAdmin || !currentPoId || !pendingDeleteLogKey) return;
   if (isConfigured && posRef) {
     setSyncStatus('connecting', 'Menghapus…');
     posRef.child(currentPoId + '/logs/' + pendingDeleteLogKey).remove();
